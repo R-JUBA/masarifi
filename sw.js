@@ -1,4 +1,5 @@
-const CACHE = 'masarifi-v49',
+// عند أي إصدار جديد: غيّر الرقم هنا وكذلك VER في index.html
+const CACHE = 'masarifi-v50',
   FILES = ['./', './index.html', './manifest.json', './cairo.woff2', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e =>
@@ -32,33 +33,35 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
 
   if (e.request.mode === 'navigate') {
+    // الشبكة أولاً مع مهلة 4 ثوانٍ ثم النسخة المخزنة (للشبكات الضعيفة)
+    const net = fetch(e.request, { cache: 'no-cache' }).then(n => {
+      const ct = n.headers.get('content-type') || '';
+      if (!n.ok || !ct.includes('text/html')) return n;
+      return n.clone().text().then(t =>
+        t.includes('masarifi.')
+          ? caches.open(CACHE).then(x => x.put('./index.html', new Response(t, { headers: { 'content-type': 'text/html; charset=utf-8' } })))
+          : 0
+      ).then(() => n);
+    });
+    e.waitUntil(net.catch(() => {}));
     e.respondWith(
-      fetch(e.request, { cache: 'no-cache' })
-        .then(n => {
-          if (n.ok) {
-            const c = n.clone();
-            caches.open(CACHE).then(x => x.put('./index.html', c));
-          }
-          return n;
-        })
-        .catch(() =>
+      Promise.race([net, new Promise(r => setTimeout(() => r(null), 4000))])
+        .catch(() => null)
+        .then(r => (r && r.ok) ? r :
           caches.match(e.request, { ignoreSearch: true })
-            .then(r => r || caches.match('./index.html'))
-        )
+            .then(c => c || caches.match('./index.html'))
+            .then(c => c || r || Response.error()))
     );
   } else {
     e.respondWith(
       caches.match(e.request, { ignoreSearch: true }).then(cached => {
-        const network = fetch(e.request)
-          .then(n => {
-            if (n.ok) {
-              const c = n.clone();
-              caches.open(CACHE).then(x => x.put(e.request, c));
-            }
-            return n;
-          })
-          .catch(() => cached);
-        return cached || network;
+        const network = fetch(e.request).then(n => {
+          if (!n.ok) return n;
+          const c = n.clone();
+          return caches.open(CACHE).then(x => x.put(e.request, c)).then(() => n);
+        });
+        if (cached) { e.waitUntil(network.catch(() => {})); return cached; }
+        return network;
       })
     );
   }
