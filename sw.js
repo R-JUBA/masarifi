@@ -1,5 +1,5 @@
 // عند أي إصدار جديد: غيّر الرقم هنا وكذلك VER في index.html
-const CACHE = 'masarifi-v50',
+const CACHE = 'masarifi-v52',
   FILES = ['./', './index.html', './manifest.json', './cairo.woff2', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e =>

@@ -103,7 +103,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 #view>*{animation:vin .25s ease}
 @media (prefers-reduced-motion:reduce){#view>*{animation:none}}
 @media print{#bnav{display:none!important}}
-</style>
+.grp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:800;gap:8px}.grp>summary::-webkit-details-marker{display:none}.grp>summary::after{content:"▾";transition:transform .2s;opacity:.6}.grp[open]>summary::after{transform:rotate(180deg)}</style>
 </head>
 <body>
 
@@ -157,7 +157,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=50;
+const CURRENCY='د.ج'; const VER=52;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -262,25 +262,16 @@ async function offCheck(){
 function backBtn(){return `<button class="secondary" style="margin-bottom:16px; width:100%; padding:12px; border-radius:12px;" data-go="settings">← العودة للإعدادات</button>`}
 
 function settingsView(){
-  const items = [
-    ['budget', '🎯', 'الميزانية الشهرية'],
-    ['archive', '🗃️', 'الأرشيف'],
-    ['stats', '📊', 'الإحصائيات'],
-    ['wallets', '👛', 'المحافظ'],
-    ['debts', '🤝', 'الديون'],
-    ['recurring', '🔁', 'المصاريف المتكررة'],
-    ['goals', '🏆', 'أهداف الادخار'],
-    ['categories', '🏷️', 'الفئات'],
-    ['backup', '💾', 'النسخ الاحتياطي'],
-    ['security', '🔒', 'الحماية'],
-    ['theme', '🎨', 'المظهر'],
-    ['lang', '🌐', 'اللغة']
+  const groups = [
+    ['💰 المال', [['wallets','👛','المحافظ'],['debts','🤝','الديون'],['goals','🏆','أهداف الادخار'],['recurring','🔁','المصاريف المتكررة']]],
+    ['📊 التحليل والتخطيط', [['stats','📊','الإحصائيات'],['budget','🎯','الميزانية الشهرية'],['archive','🗃️','الأرشيف']]],
+    ['⚙️ المزيد', [['categories','🏷️','الفئات'],['security','🔒','الحماية'],['backup','💾','النسخ الاحتياطي'],['theme','🎨','المظهر'],['lang','🌐','اللغة']]]
   ];
-  return `<div class="card"><h2>⚙️ الإعدادات</h2>
-    <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+  return groups.map(([t,items])=>`<details class="card grp"><summary>${t}</summary>
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
       ${items.map(([k,i,n])=>`<button class="tile" data-go="${k}"><span class="ic">${i}</span><span style="font-size:13px; font-weight:600;">${n}</span></button>`).join('')}
     </div>
-  </div>
+  </details>`).join('')+`
   <div class="card" style="border-color: var(--danger); margin-top: 24px;">
     <button id="deleteAllDataBtn" class="danger" style="width: 100%;">🗑️ حذف جميع البيانات نهائياً</button>
     <div class="muted" style="margin-top: 8px; font-size: 12px; text-align:center;">سيتم مسح جميع المصاريف، الديون، المحافظ، والإعدادات، وسيعود التطبيق كالجديد.</div>
@@ -688,6 +679,7 @@ Object.assign(D,{"سجل الحركات": ["Historique des mouvements", "Transac
 Object.assign(D,{"المزيد": ["Plus", "More"], "اليوم": ["Aujourd’hui", "Today"], "أمس": ["Hier", "Yesterday"]});
 Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["Navigateur non compatible hors ligne", "Browser does not support offline mode"], "يلزم فتح التطبيق عبر https": ["L’application doit être ouverte en https", "The app must be opened over https"], "جاهز للعمل دون اتصال": ["Prêt pour le mode hors ligne", "Ready to work offline"], "لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل": ["Préparation incomplète : rouvrez l’application en ligne", "Setup incomplete: reopen the app while online"], "تعذّر فحص التخزين المؤقت": ["Impossible de vérifier le cache", "Could not check the cache"]});
 Object.assign(D,{"اختر الفترة":["Choisir la période","Choose period"],"الفترة المعروضة":["Période affichée","Displayed period"],"يُسجَّل بتاريخ هذا اليوم من كل شهر ميلادي، وتُعوَّض الأشهر الفائتة تلقائياً عند فتح التطبيق.":["Enregistrée à cette date chaque mois civil ; les mois manqués sont rattrapés à l’ouverture de l’application.","Recorded on this day of each calendar month; missed months are caught up when the app opens."]});
+Object.assign(D,{"المال":["Argent","Money"],"التحليل والتخطيط":["Analyse et planification","Analysis & planning"]});
 function T1(c){let L=LANG==='fr'?0:1,d=D[c];if(d)return d[L];if(c.includes(' · '))return c.split(' · ').map(x=>T(x)).join(' · ');for(const[re,v]of PAT)if(re.test(c))return c.replace(re,v[L]);let m=/^([^\p{L}\p{N}\s]+\s*)([\s\S]+)$/u.exec(c);if(m){let r=T1(m[2]);if(r!==m[2])return m[1]+r}return c}
 function T(s){if(LANG==='ar'||typeof s!=='string'||!s)return s;let m=/^(\s*)([\s\S]*?)(\s*)$/.exec(s);if(!m[2])return s;return m[1]+T1(m[2]).replace(/د\.ج/g,CUR_[LANG])+m[3]}
 
