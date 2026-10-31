@@ -157,7 +157,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=44;
+const CURRENCY='د.ج'; const VER=45;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -238,6 +238,16 @@ function render(scrollTop=false){
   document.querySelectorAll('#bnav [data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===(['expenses','stats','wallets'].includes(tab)?tab:'settings')));
   bind(); ico(document.body); tr(document.body);
   if(scrollTop) setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),50);
+  if(tab==='settings') offCheck();
+}
+async function offCheck(){
+  const el=document.getElementById('offst'); if(!el) return;
+  let t;
+  if(!('serviceWorker' in navigator)) t='⚠️ المتصفح لا يدعم العمل دون اتصال';
+  else if(!window.isSecureContext) t='⚠️ يلزم فتح التطبيق عبر https';
+  else if(window.__swErr) t='⚠️ تعذّر تفعيل العمل دون اتصال: '+window.__swErr;
+  else { try{ const c=await caches.match('./index.html'); t=(navigator.serviceWorker.controller&&c)?'✔ جاهز للعمل دون اتصال':'⚠️ لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل'; }catch{ t='⚠️ تعذّر فحص التخزين المؤقت'; } }
+  el.textContent=T(t);
 }
 
 function backBtn(){return `<button class="secondary" style="margin-bottom:16px; width:100%; padding:12px; border-radius:12px;" data-go="settings">← العودة للإعدادات</button>`}
@@ -267,7 +277,8 @@ function settingsView(){
     <button id="deleteAllDataBtn" class="danger" style="width: 100%;">🗑️ حذف جميع البيانات نهائياً</button>
     <div class="muted" style="margin-top: 8px; font-size: 12px; text-align:center;">سيتم مسح جميع المصاريف، الديون، المحافظ، والإعدادات، وسيعود التطبيق كالجديد.</div>
   </div>
-  <div class="muted" style="text-align:center; margin-top:24px">إصدار التطبيق: ${VER}</div>`;
+  <div class="muted" style="text-align:center; margin-top:24px">إصدار التطبيق: ${VER}</div>
+  <div id="offst" class="muted" style="text-align:center; margin-top:6px; font-size:12px"></div>`;
 }
 
 function buildCatOptions(selectedId) {
@@ -662,6 +673,7 @@ PAT.push([new RegExp("^يوم (\\d+)$"),["Jour $1","Day $1"]],[new RegExp("^تج
 Object.assign(D,{"السماح برصيد سالب": ["Autoriser un solde négatif", "Allow negative balance"], "يوجد تحديث جديد": ["Mise à jour disponible", "Update available"], "تحديث الآن": ["Mettre à jour", "Update now"], "لم تأخذ نسخة احتياطية منذ مدة": ["Aucune sauvegarde récente", "No recent backup"], "نسخ الآن": ["Sauvegarder", "Back up now"]});PAT.push([new RegExp("^استهلكت (\\d+)٪ من الميزانية$"),["Vous avez utilisé $1 % du budget","You used $1% of the budget"]]);
 Object.assign(D,{"سجل الحركات": ["Historique des mouvements", "Transactions log"], "لا توجد حركات": ["Aucun mouvement", "No transactions"], "حذف هذه الحركة وعكس أثرها على الأرصدة؟": ["Supprimer ce mouvement et annuler son effet sur les soldes ?", "Delete this transaction and reverse its effect on balances?"], "المصدر": ["Source", "Source"], "راتب، عمل إضافي...": ["Salaire, travail extra...", "Salary, extra work..."], "دخل هذه الفترة:": ["Revenus de la période :", "Income this period:"], "الصافي:": ["Net :", "Net:"], "أهداف الادخار": ["Objectifs d’épargne", "Savings goals"], "هدف جديد": ["Nouvel objectif", "New goal"], "اسم الهدف": ["Nom de l’objectif", "Goal name"], "المبلغ المستهدف": ["Montant cible", "Target amount"], "التاريخ المستهدف (اختياري)": ["Date cible (facultatif)", "Target date (optional)"], "حفظ الهدف": ["Enregistrer l’objectif", "Save goal"], "الادخار هنا للتتبع فقط ولا يخصم من الأرصدة.": ["L’épargne ici sert au suivi uniquement et n’est pas déduite des soldes.", "Savings here are for tracking only and are not deducted from balances."], "أهدافي": ["Mes objectifs", "My goals"], "لا توجد أهداف": ["Aucun objectif", "No goals"], "+ ادخار": ["+ Épargner", "+ Save"], "تم بلوغ الهدف": ["Objectif atteint", "Goal reached"], "حذف هذا الهدف؟": ["Supprimer cet objectif ?", "Delete this goal?"], "بلغت هدفك!": ["Objectif atteint !", "Goal reached!"]});PAT.push([new RegExp("^يلزم (.+) شهرياً$"),["Il faut $1 par mois","Need $1 per month"]]);
 Object.assign(D,{"المزيد": ["Plus", "More"], "اليوم": ["Aujourd’hui", "Today"], "أمس": ["Hier", "Yesterday"]});
+Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["Navigateur non compatible hors ligne", "Browser does not support offline mode"], "يلزم فتح التطبيق عبر https": ["L’application doit être ouverte en https", "The app must be opened over https"], "جاهز للعمل دون اتصال": ["Prêt pour le mode hors ligne", "Ready to work offline"], "لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل": ["Préparation incomplète : rouvrez l’application en ligne", "Setup incomplete: reopen the app while online"], "تعذّر فحص التخزين المؤقت": ["Impossible de vérifier le cache", "Could not check the cache"]});
 function T1(c){let L=LANG==='fr'?0:1,d=D[c];if(d)return d[L];if(c.includes(' · '))return c.split(' · ').map(x=>T(x)).join(' · ');for(const[re,v]of PAT)if(re.test(c))return c.replace(re,v[L]);let m=/^([^\p{L}\p{N}\s]+\s*)([\s\S]+)$/u.exec(c);if(m){let r=T1(m[2]);if(r!==m[2])return m[1]+r}return c}
 function T(s){if(LANG==='ar'||typeof s!=='string'||!s)return s;let m=/^(\s*)([\s\S]*?)(\s*)$/.exec(s);if(!m[2])return s;return m[1]+T1(m[2]).replace(/د\.ج/g,CUR_[LANG])+m[3]}
 
@@ -1142,6 +1154,6 @@ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catc
 if('serviceWorker'in navigator){
   let had=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;updBar()}});
-  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{}))
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(e=>{window.__swErr=String((e&&e.message)||e).slice(0,70)}))
 }
 </script></body></html>
