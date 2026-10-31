@@ -96,6 +96,9 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 #bnav button.on{color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent)}
 #bnav .i{width:22px;height:22px}
 .cat-dot{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.expense-item{gap:6px;padding:12px 14px}
+.expense-bottom{border-top:0;padding-top:0}
+.expense-actions button{padding:3px 10px;font-size:11px;border-radius:8px;opacity:.85}
 @keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 #view>*{animation:vin .25s ease}
 @media (prefers-reduced-motion:reduce){#view>*{animation:none}}
@@ -154,7 +157,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=43;
+const CURRENCY='د.ج'; const VER=44;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -508,7 +511,7 @@ function expRow(e){
       <div class="expense-amount">${fmt(e.amount)}</div>
     </div>
     <div class="expense-bottom">
-      <div class="expense-meta">${esc(dStr)} · ${e.wallet==='cash'?'💵 نقدية':'💳 بنك'}</div>
+      <div class="expense-meta">${e.wallet==='cash'?'💵 نقدية':'💳 بنك'}</div>
       <div class="expense-actions">
         <button class="secondary" data-editexp="${esc(e.id)}">تعديل</button>
         <button class="danger" data-del="${esc(e.id)}">حذف</button>
