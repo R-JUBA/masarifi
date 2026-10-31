@@ -35,13 +35,21 @@ button {
 button:active { transform: scale(0.97); }
 .wrap { max-width: 680px; margin: auto; padding: 16px; }
 
+/* Top Bar & Hero */
 .hero {
   background: linear-gradient(135deg, #3730a3, #4f46e5);
-  color: white; padding: calc(24px + env(safe-area-inset-top)) 16px 28px;
+  color: white; padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
   border-radius: 0 0 28px 28px; box-shadow: 0 4px 12px rgba(79,70,229,0.25);
 }
-.hero h1 { margin: 0; font-size: 20px; }
-.hero p { margin: 4px 0 16px; font-size: 14px; opacity: 0.9; }
+.top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.top-nav h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.btn-nav {
+  background: rgba(255,255,255,0.2); color: white; padding: 8px 16px;
+  border-radius: 12px; font-size: 13px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);
+}
+.btn-nav:active { background: rgba(255,255,255,0.3); }
+.hero p { margin: 0 0 16px; font-size: 14px; opacity: 0.9; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .balance, .card { 
@@ -56,18 +64,6 @@ button:active { transform: scale(0.97); }
 }
 .balance:active { transform: scale(0.98); }
 .balance strong { display: block; font-size: 24px; margin-top: 4px; font-weight: 800; }
-
-.tabs {
-  display: flex; justify-content: space-between; align-items: center;
-  margin: 8px 0 16px; gap: 12px;
-}
-.tabs button {
-  flex: 1; padding: 12px; font-size: 15px;
-  background: var(--card); color: var(--text);
-  border: 1px solid var(--line); box-shadow: var(--shadow);
-  border-radius: 14px;
-}
-.tabs .active { background: var(--primary); color: white; border-color: var(--primary); }
 
 .field { margin: 12px 0; }
 .field label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; font-weight: 600; }
@@ -121,16 +117,23 @@ h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-i
 .modal-header h2 { margin: 0; }
 .close-modal { background: none; color: var(--text); font-size: 24px; padding: 0; }
 .drag-list { overflow-y: auto; flex: 1; padding-bottom: 10px; }
+
 .drag-item {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 12px; margin-bottom: 8px; cursor: grab;
-  touch-action: none; /* Important for drag on touch devices */
-  user-select: none;
+  border-radius: 12px; margin-bottom: 8px;
+  user-select: none; -webkit-user-select: none;
+  transition: background-color 0.2s;
 }
-.drag-item:active { cursor: grabbing; }
-.drag-item.dragging { opacity: 0.8; box-shadow: 0 10px 20px rgba(0,0,0,0.15); z-index: 1001; }
-.drag-item .cat-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.drag-item:active { background-color: #f8fafc; }
+body.dark .drag-item:active { background-color: #0f172a; }
+
+.drag-item.dragging { 
+  opacity: 0.9; box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
+  z-index: 1001; background-color: var(--card); border-color: var(--primary);
+  cursor: grabbing;
+}
+.drag-item .cat-name { font-weight: 600; display: flex; align-items: center; gap: 8px; pointer-events: none;}
 .drag-item .cat-actions { display: flex; gap: 6px; }
 .drag-item .cat-actions button { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
 .sub-cat-item { padding-right: 32px; background: var(--bg); }
@@ -145,8 +148,6 @@ body.dark .field input, body.dark .field select { background: #0f172a; }
 body.dark .danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
 body.dark .secondary { background: #334155; color: white; border-color: #475569; }
 body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
-body.dark .tabs button { background: #1e293b; color: white; border-color: #334155; }
-body.dark .tabs .active { background: var(--primary); border-color: var(--primary); }
 
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -173,8 +174,9 @@ body.dark .tabs .active { background: var(--primary); border-color: var(--primar
 
 <header class="hero">
   <div class="wrap">
-    <div class="row" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="top-nav">
       <h1>📒 مصاريفي</h1>
+      <button id="navToggleBtn" class="btn-nav" onclick="toggleNav()">⚙️ الإعدادات</button>
     </div>
     <p>إدارة أموالك ومصاريفك بذكاء</p>
     <div class="grid">
@@ -185,10 +187,6 @@ body.dark .tabs .active { background: var(--primary); border-color: var(--primar
 </header>
 
 <main class="wrap">
-  <nav class="tabs">
-    <button data-tab="expenses" class="active">📝 المصاريف</button>
-    <button data-tab="settings">⚙️ الإعدادات</button>
-  </nav>
   <section id="view"></section>
 </main>
 
@@ -199,7 +197,7 @@ body.dark .tabs .active { background: var(--primary); border-color: var(--primar
       <h2>🏷️ إدارة وترتيب الفئات</h2>
       <button class="close-modal" onclick="closeCatModal()">✕</button>
     </div>
-    <p class="muted" style="margin-top:0; margin-bottom:12px;">اضغط مطولاً على أي فئة واسحبها للأعلى أو الأسفل لترتيبها.</p>
+    <p class="muted" style="margin-top:0; margin-bottom:12px;">اضغط <b>مطولاً</b> على أي فئة (0.4 ثانية) واسحبها للأعلى أو الأسفل لترتيبها.</p>
     <div class="drag-list" id="dragList">
       <!-- Categories will be injected here -->
     </div>
@@ -221,7 +219,7 @@ body.dark .tabs .active { background: var(--primary); border-color: var(--primar
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=30;
+const CURRENCY='د.ج'; const VER=31;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -247,13 +245,23 @@ function msg(s){let t=document.querySelector('#toast');t.textContent=T(s);t.clas
 function cat(x){return cats.find(c=>c.id===x)||{id:'',name:'غير مصنف',emoji:'📦',color:'#a3a3a3',parent:null}}
 function applyTheme(){document.body.classList.toggle('dark',cfg.theme==='dark'||(cfg.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))}
 
+function toggleNav() {
+  if(tab === 'expenses') { tab = 'settings'; }
+  else { tab = 'expenses'; editCat = null; }
+  render(true);
+}
+
 function render(scrollTop=false){
   applyTheme(); applyLang();
   document.querySelector('#bank').textContent=fmt(wallets.account);
   document.querySelector('#cash').textContent=fmt(wallets.cash);
   
-  const isSettingsTab = ['stats','wallets','debts','categories','backup','security','theme','lang','budget','archive','settings'].includes(tab);
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active', (b.dataset.tab==='settings' && isSettingsTab) || (b.dataset.tab==='expenses' && tab==='expenses')));
+  const navBtn = document.getElementById('navToggleBtn');
+  if(tab === 'expenses') {
+    navBtn.innerHTML = '⚙️ الإعدادات';
+  } else {
+    navBtn.innerHTML = '📝 المصاريف';
+  }
   
   document.querySelector('#view').innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView})[tab]();
   
@@ -584,7 +592,7 @@ function bind(){
 }
 
 // --- Drag & Drop Logic for Categories ---
-let dragEl = null, dragPlaceholder = null, startY = 0;
+let dragEl = null, dragPlaceholder = null, startY = 0, pressTimer = null;
 
 function openCatModal() {
   document.getElementById('catModal').classList.add('active');
@@ -666,34 +674,59 @@ function renderCatModalList() {
 
   // Attach pointer events for Drag & Drop
   document.querySelectorAll('.drag-item').forEach(item => {
-    if(item.tagName === 'FORM') return; // Don't drag forms
+    if(item.tagName === 'FORM') return;
+    
     item.addEventListener('pointerdown', e => {
-      if(e.target.closest('button')) return; // Ignore clicks on buttons
-      dragEl = item;
+      if(e.target.closest('button')) return;
       startY = e.clientY;
       
-      dragPlaceholder = document.createElement('div');
-      dragPlaceholder.style.height = `${item.offsetHeight}px`;
-      dragPlaceholder.style.margin = '8px 0';
-      dragPlaceholder.style.borderRadius = '12px';
-      dragPlaceholder.style.background = 'var(--line)';
-      dragPlaceholder.style.opacity = '0.5';
-      
-      item.after(dragPlaceholder);
-      
-      item.classList.add('dragging');
-      item.style.pointerEvents = 'none';
-      item.style.position = 'relative';
-      
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onPointerUp);
+      pressTimer = setTimeout(() => {
+        if (navigator.vibrate) navigator.vibrate(50);
+        startDrag(item, e.clientY);
+      }, 400);
+    });
+    
+    item.addEventListener('pointerup', cancelPress);
+    item.addEventListener('pointercancel', cancelPress);
+    item.addEventListener('pointermove', e => {
+      if (pressTimer && Math.abs(e.clientY - startY) > 10) {
+        cancelPress();
+      }
     });
   });
 }
 
+function cancelPress() {
+  if(pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+}
+
+function startDrag(item, clientY) {
+  dragEl = item;
+  startY = clientY;
+  
+  dragPlaceholder = document.createElement('div');
+  dragPlaceholder.style.height = `${item.offsetHeight}px`;
+  dragPlaceholder.style.margin = '8px 0';
+  dragPlaceholder.style.borderRadius = '12px';
+  dragPlaceholder.style.background = 'var(--line)';
+  dragPlaceholder.style.opacity = '0.5';
+  
+  item.after(dragPlaceholder);
+  item.classList.add('dragging');
+  item.style.pointerEvents = 'none';
+  item.style.position = 'relative';
+  item.style.touchAction = 'none';
+  
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+}
+
 function onPointerMove(e) {
   if(!dragEl) return;
-  e.preventDefault();
+  e.preventDefault(); // Stop scrolling
   const dy = e.clientY - startY;
   dragEl.style.transform = `translateY(${dy}px)`;
   
@@ -742,7 +775,6 @@ function saveNewCatOrder() {
 }
 
 // Initial render
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;editCat=null;payDebt=null;editExp=null;render(true)});
 if(cfg.pw)lockNow();
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&cfg.pw&&cfg.autoLock!==false)lockNow()});
 render();
