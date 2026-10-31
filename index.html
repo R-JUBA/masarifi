@@ -117,17 +117,18 @@ h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-i
   border-radius: 12px; margin: 0;
   user-select: none; -webkit-user-select: none;
   transition: background-color 0.2s;
-  touch-action: pan-y; /* يسمح بالتمرير الطبيعي قبل السحب */
+  touch-action: pan-y;
 }
 .drag-item:active { background-color: #f8fafc; }
 body.dark .drag-item:active { background-color: #0f172a; }
 
-.drag-item.dragging { 
-  opacity: 0.95; box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+/* The clone that floats with the finger */
+.drag-clone { 
+  opacity: 0.95; box-shadow: 0 15px 30px rgba(0,0,0,0.2); 
   z-index: 9999; background-color: var(--card); border-color: var(--primary);
-  cursor: grabbing; transform: scale(1.02); transition: none;
-  pointer-events: none; /* يمنع اعتراض المؤشر */
+  transform: scale(1.02); pointer-events: none;
 }
+/* The dashed placeholder left in the list */
 .drag-placeholder {
   border: 2px dashed var(--primary); background: rgba(79, 70, 229, 0.05);
   border-radius: 12px; margin: 0; flex-shrink: 0;
@@ -220,7 +221,7 @@ body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=33;
+const CURRENCY='د.ج'; const VER=34;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -592,9 +593,12 @@ function bind(){
   let im=document.querySelector('#import'),file=document.querySelector('#file');if(im)im.onclick=()=>file.click();if(file)file.onchange=async()=>{try{let d=JSON.parse(await file.files[0].text());if(!Array.isArray(d.expenses)||!Array.isArray(d.debts)||!(Array.isArray(d.cats)||Array.isArray(d.customCats))||!d.wallets||!['account','cash'].every(k=>Number.isFinite(Number(d.wallets[k])))||!d.expenses.every(x=>Number(x.amount)>0&&['account','cash'].includes(x.wallet))||!d.debts.every(x=>Number(x.amount)>0&&['lend','borrow'].includes(x.type)))throw 0;expenses=d.expenses;debts=d.debts.map(migr);let nc=Array.isArray(d.cats)?d.cats:defaults.concat(d.customCats);nc=nc.filter(c=>c&&c.id&&c.name&&c.emoji);nc.forEach(c=>{if(c.parent===undefined)c.parent=null});cats=nc.length?nc:defaults.slice();if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80))});wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};save();render();msg('تم الاستيراد')}catch{msg('ملف غير صالح')}}
 }
 
-// --- Drag & Drop Logic for Categories ---
-let dragEl = null, dragPlaceholder = null, startY = 0, startX = 0, pressTimer = null;
-let offsetX = 0, offsetY = 0;
+// --- Robust Drag & Drop Logic for Categories ---
+let dragItem = null;
+let dragClone = null;
+let dragPlaceholder = null;
+let pressTimer = null;
+let startX, startY;
 
 function openCatModal() {
   document.getElementById('catModal').classList.add('active');
@@ -674,131 +678,112 @@ function renderCatModalList() {
   bind();
   ico(list); tr(list);
 
-  // Attach pointer events for Drag & Drop
-  document.querySelectorAll('.drag-item').forEach(item => {
-    if(item.tagName === 'FORM') return;
-    
-    item.addEventListener('pointerdown', e => {
-      if(e.target.closest('button')) return;
-      startY = e.clientY;
-      startX = e.clientX;
-      
-      // منع القائمة المنبثقة عند الضغط المطول
-      item.style.webkitTouchCallout = 'none';
-      
-      pressTimer = setTimeout(() => {
-        startDrag(item, e);
-      }, 400);
-    });
-    
-    item.addEventListener('pointerup', cancelPress);
-    item.addEventListener('pointercancel', cancelPress);
-    item.addEventListener('pointerleave', cancelPress);
-    item.addEventListener('pointermove', e => {
-      if (pressTimer && (Math.abs(e.clientY - startY) > 10 || Math.abs(e.clientX - startX) > 10)) {
-        cancelPress();
-      }
-    });
-  });
+  // Attach pointer events for Drag & Drop (delegation)
+  list.onpointerdown = handlePointerDown;
 }
 
-function cancelPress() {
-  if(pressTimer) {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-  }
+function handlePointerDown(e) {
+  const item = e.target.closest('.drag-item');
+  if (!item || item.tagName === 'FORM' || e.target.closest('button')) return;
+
+  startX = e.clientX;
+  startY = e.clientY;
+
+  pressTimer = setTimeout(() => {
+    startDrag(item, e);
+  }, 400);
+
+  const cancelPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  document.addEventListener('pointerup', cancelPress, { once: true });
+  document.addEventListener('pointercancel', cancelPress, { once: true });
+  document.addEventListener('pointermove', (e) => {
+    if (pressTimer && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)) {
+      cancelPress();
+    }
+  });
 }
 
 function startDrag(item, e) {
   if (navigator.vibrate) navigator.vibrate(50);
-  
-  dragEl = item;
+
+  dragItem = item;
   const rect = item.getBoundingClientRect();
-  offsetX = e.clientX - rect.left;
-  offsetY = e.clientY - rect.top;
-  
-  // Create placeholder
+
+  // 1. Create Placeholder (same size as item)
   dragPlaceholder = document.createElement('div');
   dragPlaceholder.className = 'drag-placeholder';
   dragPlaceholder.style.height = `${rect.height}px`;
   dragPlaceholder.style.width = `${rect.width}px`;
+  dragPlaceholder.style.margin = '0';
+  dragPlaceholder.style.flexShrink = '0';
+
+  // 2. Insert Placeholder before the item and hide the item
+  item.parentNode.insertBefore(dragPlaceholder, item);
+  item.style.display = 'none';
+
+  // 3. Create Clone to float with pointer
+  dragClone = item.cloneNode(true);
+  dragClone.classList.add('drag-clone');
+  dragClone.style.position = 'fixed';
+  dragClone.style.top = `${rect.top}px`;
+  dragClone.style.left = `${rect.left}px`;
+  dragClone.style.width = `${rect.width}px`;
+  dragClone.style.height = `${rect.height}px`;
   
-  // Insert placeholder after the item
-  item.after(dragPlaceholder);
-  
-  // Style the dragged item to float
-  item.classList.add('dragging');
-  item.style.position = 'fixed';
-  item.style.top = `${rect.top}px`;
-  item.style.left = `${rect.left}px`;
-  item.style.width = `${rect.width}px`;
-  item.style.height = `${rect.height}px`;
-  item.style.margin = '0';
-  item.style.zIndex = '9999';
-  item.style.pointerEvents = 'none'; // Crucial for elementsFromPoint
-  
-  document.addEventListener('pointermove', onPointerMove, { passive: false });
-  document.addEventListener('pointerup', onPointerUp);
+  document.body.appendChild(dragClone);
+
+  // Store offset for smooth dragging
+  dragClone.offsetY = e.clientY - rect.top;
+  dragClone.offsetX = e.clientX - rect.left;
+
+  document.addEventListener('pointermove', onDragMove, { passive: false });
+  document.addEventListener('pointerup', onDragEnd, { once: true });
 }
 
-function onPointerMove(e) {
-  if (!dragEl) return;
-  e.preventDefault(); // Prevent scrolling
-  
-  dragEl.style.top = `${e.clientY - offsetY}px`;
-  dragEl.style.left = `${e.clientX - offsetX}px`;
-  
-  // Check which element is under the cursor
-  const elements = document.elementsFromPoint(e.clientX, e.clientY);
-  const target = elements.find(el => el.classList.contains('drag-item') && el !== dragEl && el.tagName !== 'FORM');
-  
-  if (target) {
-    const targetRect = target.getBoundingClientRect();
+function onDragMove(e) {
+  if (!dragClone) return;
+  e.preventDefault(); // Stop scrolling
+
+  dragClone.style.top = `${e.clientY - dragClone.offsetY}px`;
+  dragClone.style.left = `${e.clientX - dragClone.offsetX}px`;
+
+  // Find element under pointer (excluding the clone itself since pointer-events: none)
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const targetItem = el ? el.closest('.drag-item') : null;
+
+  if (targetItem && targetItem !== dragItem && targetItem.tagName !== 'FORM' && targetItem.style.display !== 'none') {
+    const targetRect = targetItem.getBoundingClientRect();
     const targetMid = targetRect.top + targetRect.height / 2;
-    
+
     if (e.clientY < targetMid) {
-      target.before(dragPlaceholder);
+      targetItem.parentNode.insertBefore(dragPlaceholder, targetItem);
     } else {
-      target.after(dragPlaceholder);
-    }
-  } else {
-    // Check if we are hovering over the drag-list itself
-    const list = document.getElementById('dragList');
-    const listRect = list.getBoundingClientRect();
-    if (e.clientY > listRect.top && e.clientY < listRect.bottom) {
-       if (list.lastElementChild !== dragPlaceholder && e.clientY > (listRect.top + listRect.height / 2)) {
-           list.append(dragPlaceholder);
-       }
+      targetItem.parentNode.insertBefore(dragPlaceholder, targetItem.nextSibling);
     }
   }
 }
 
-function onPointerUp(e) {
-  if (!dragEl) return;
-  
-  // Reset styles
-  dragEl.style.position = '';
-  dragEl.style.top = '';
-  dragEl.style.left = '';
-  dragEl.style.width = '';
-  dragEl.style.height = '';
-  dragEl.style.margin = '';
-  dragEl.style.zIndex = '';
-  dragEl.style.pointerEvents = '';
-  dragEl.classList.remove('dragging');
-  
-  // Place in final position
-  if (dragPlaceholder.parentNode) {
-    dragPlaceholder.before(dragEl);
-    dragPlaceholder.remove();
-  }
-  
-  dragEl = null;
+function onDragEnd(e) {
+  if (!dragClone) return;
+
+  // Cleanup
+  dragClone.remove();
+  dragItem.style.display = '';
+  dragPlaceholder.parentNode.insertBefore(dragItem, dragPlaceholder);
+  dragPlaceholder.remove();
+
+  dragClone = null;
+  dragItem = null;
   dragPlaceholder = null;
-  
-  document.removeEventListener('pointermove', onPointerMove);
-  document.removeEventListener('pointerup', onPointerUp);
-  
+
+  document.removeEventListener('pointermove', onDragMove);
+
   saveNewCatOrder();
 }
 
