@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0d9488">
+<meta name="theme-color" content="#4f46e5">
 <link rel="manifest" href="manifest.json">
 <title>مصاريفي</title>
 <style>
 :root {
-  --bg: #f8fafc;
+  --bg: #f1f5f9;
   --card: #ffffff;
-  --text: #1e293b;
+  --text: #0f172a;
   --muted: #64748b;
-  --teal: #0d9488;
-  --teal-hover: #0f766e;
-  --line: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --line: #cbd5e1;
   --danger: #ef4444;
   --green: #10b981;
   --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
@@ -29,19 +29,19 @@ body {
 button, input, select { font: inherit; outline: none; }
 button {
   border: 0; border-radius: 12px; padding: 12px;
-  background: var(--teal); color: white; font-weight: 600;
+  background: var(--primary); color: white; font-weight: 600;
   cursor: pointer; transition: all 0.2s;
 }
 button:active { transform: scale(0.97); }
 .wrap { max-width: 680px; margin: auto; padding: 16px; }
 
 .hero {
-  background: linear-gradient(135deg, #0f766e, #0d9488);
+  background: linear-gradient(135deg, #3730a3, #4f46e5);
   color: white; padding: calc(24px + env(safe-area-inset-top)) 16px 28px;
-  border-radius: 0 0 28px 28px; box-shadow: 0 4px 12px rgba(13,148,136,0.2);
+  border-radius: 0 0 28px 28px; box-shadow: 0 4px 12px rgba(79,70,229,0.25);
 }
 .hero h1 { margin: 0; font-size: 20px; }
-.hero p { margin: 4px 0 16px; font-size: 14px; opacity: 0.8; }
+.hero p { margin: 4px 0 16px; font-size: 14px; opacity: 0.9; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .balance, .card { 
@@ -50,14 +50,13 @@ button:active { transform: scale(0.97); }
   margin: 12px 0; border: 1px solid var(--line);
 }
 .balance { 
-  background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.2); color: white;
   cursor: pointer; transition: transform 0.15s;
 }
 .balance:active { transform: scale(0.98); }
 .balance strong { display: block; font-size: 24px; margin-top: 4px; font-weight: 800; }
 
-/* Tabs - Settings on Left, Expenses on Right */
 .tabs {
   display: flex; justify-content: space-between; align-items: center;
   margin: 8px 0 16px; gap: 12px;
@@ -68,7 +67,7 @@ button:active { transform: scale(0.97); }
   border: 1px solid var(--line); box-shadow: var(--shadow);
   border-radius: 14px;
 }
-.tabs .active { background: var(--teal); color: white; border-color: var(--teal); }
+.tabs .active { background: var(--primary); color: white; border-color: var(--primary); }
 
 .field { margin: 12px 0; }
 .field label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; font-weight: 600; }
@@ -77,7 +76,7 @@ button:active { transform: scale(0.97); }
   border-radius: 12px; background: var(--bg); color: var(--text);
   transition: border-color 0.2s;
 }
-.field input:focus, .field select:focus { border-color: var(--teal); background: var(--card); }
+.field input:focus, .field select:focus { border-color: var(--primary); background: var(--card); }
 
 h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .muted { font-size: 13px; color: var(--muted); }
@@ -88,7 +87,6 @@ h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-i
 .secondary { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
 .empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 14px; }
 
-/* Expense List Items */
 .expense-item {
   display: flex; flex-direction: column; gap: 10px;
   padding: 14px; background: var(--card); border: 1px solid var(--line);
@@ -103,42 +101,61 @@ h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-i
 .expense-actions { display: flex; gap: 6px; }
 .expense-actions button { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
 
-/* Categories List */
-.cat-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 0; border-bottom: 1px solid var(--line); gap: 8px; flex-wrap: wrap;
-}
-.cat-item:last-child { border-bottom: 0; }
-.cat-info { flex: 1; min-width: 120px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.cat-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.cat-actions button { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
-.sub-cat-wrap { padding-right: 20px; border-right: 3px solid var(--teal); margin-right: 4px; margin-top: 4px; }
-
 .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0; }
-.bar i { display: block; height: 100%; background: var(--teal); border-radius: 4px; transition: width 0.3s; }
+.bar i { display: block; height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
+
+/* Modals & Drag and Drop */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-content {
+  background: var(--bg); width: 90%; max-width: 500px; max-height: 85vh;
+  border-radius: 24px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.3s;
+}
+.modal-overlay.active .modal-content { transform: translateY(0); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-header h2 { margin: 0; }
+.close-modal { background: none; color: var(--text); font-size: 24px; padding: 0; }
+.drag-list { overflow-y: auto; flex: 1; padding-bottom: 10px; }
+.drag-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; margin-bottom: 8px; cursor: grab;
+  touch-action: none; /* Important for drag on touch devices */
+  user-select: none;
+}
+.drag-item:active { cursor: grabbing; }
+.drag-item.dragging { opacity: 0.8; box-shadow: 0 10px 20px rgba(0,0,0,0.15); z-index: 1001; }
+.drag-item .cat-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.drag-item .cat-actions { display: flex; gap: 6px; }
+.drag-item .cat-actions button { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+.sub-cat-item { padding-right: 32px; background: var(--bg); }
 
 /* Dark Mode */
 body.dark {
-  --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8;
+  --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8;
   --line: #334155; --shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
 }
+body.dark .hero { background: linear-gradient(135deg, #1e1b4b, #4338ca); }
 body.dark .field input, body.dark .field select { background: #0f172a; }
 body.dark .danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
 body.dark .secondary { background: #334155; color: white; border-color: #475569; }
 body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
 body.dark .tabs button { background: #1e293b; color: white; border-color: #334155; }
-body.dark .tabs .active { background: var(--teal); border-color: var(--teal); }
+body.dark .tabs .active { background: var(--primary); border-color: var(--primary); }
 
-/* Toast */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
   background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px;
   font-weight: 600; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1100; opacity: 0;
 }
 .toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-/* Print */
 #pa { display: none; }
 @media print {
   @page { margin: 12mm; }
@@ -159,7 +176,7 @@ body.dark .tabs .active { background: var(--teal); border-color: var(--teal); }
     <div class="row" style="display:flex; justify-content:space-between; align-items:center;">
       <h1>📒 مصاريفي</h1>
     </div>
-    <p>إدارة أموالك ومصاريفك وديونك بذكاء</p>
+    <p>إدارة أموالك ومصاريفك بذكاء</p>
     <div class="grid">
       <div class="balance" data-go="wallets">🏦 الحساب البنكي<strong id="bank">0</strong></div>
       <div class="balance" data-go="wallets">💵 النقدية / الجيب<strong id="cash">0</strong></div>
@@ -175,11 +192,36 @@ body.dark .tabs .active { background: var(--teal); border-color: var(--teal); }
   <section id="view"></section>
 </main>
 
+<!-- Floating Modal for Categories -->
+<div id="catModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🏷️ إدارة وترتيب الفئات</h2>
+      <button class="close-modal" onclick="closeCatModal()">✕</button>
+    </div>
+    <p class="muted" style="margin-top:0; margin-bottom:12px;">اضغط مطولاً على أي فئة واسحبها للأعلى أو الأسفل لترتيبها.</p>
+    <div class="drag-list" id="dragList">
+      <!-- Categories will be injected here -->
+    </div>
+    <button onclick="toggleAddCatForm()" class="secondary" style="width:100%; margin-top:8px;">➕ إضافة فئة جديدة</button>
+    
+    <div id="addCatWrapper" style="display:none; margin-top:16px; border-top:1px dashed var(--line); padding-top:16px;">
+      <form id="cf">
+        <div class="field"><label>الاسم</label><input name="name" required maxlength="40"></div>
+        <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="✨" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="#4f46e5" style="height:44px; padding:4px;"></div></div>
+        <div class="field"><label>الفئة الأم</label><select name="parent"><option value="">-- فئة رئيسية --</option><span id="parentOptions"></span></select></div>
+        <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="0"></div>
+        <button type="submit" style="width:100%;">حفظ الفئة</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=24;
+const CURRENCY='د.ج'; const VER=30;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -213,7 +255,7 @@ function render(scrollTop=false){
   const isSettingsTab = ['stats','wallets','debts','categories','backup','security','theme','lang','budget','archive','settings'].includes(tab);
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active', (b.dataset.tab==='settings' && isSettingsTab) || (b.dataset.tab==='expenses' && tab==='expenses')));
   
-  document.querySelector('#view').innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,categories:catView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView})[tab]();
+  document.querySelector('#view').innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView})[tab]();
   
   bind(); ico(document.body); tr(document.body);
   if(scrollTop) setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),50);
@@ -311,78 +353,6 @@ function debtView(){
   <div class="card"><h2>سجل الديون</h2>${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div>`;
 }
 
-function catView(){
-  cats.forEach(c=>{if(c.parent&&!cats.some(m=>m.id===c.parent&&!m.parent))c.parent=null});
-  let mainCats = cats.filter(c=>!c.parent);
-  let catHtml = mainCats.map((m, idx) => {
-    let subs = cats.filter(c=>c.parent === m.id);
-    let row = '';
-    
-    if (m.id === editCat) {
-      row += `<form class="ecf card" data-id="${esc(m.id)}" style="margin:8px 0; padding:12px; background:var(--bg);">
-        <div class="field"><label>الاسم</label><input name="name" value="${esc(m.name)}" required maxlength="40"></div>
-        <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="${esc(m.emoji)}" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="${esc(m.color||'#14b8a6')}" style="height:44px; padding:4px;"></div></div>
-        ${subs.length===0?`<div class="field"><label>الفئة الأم</label><select name="parent"><option value="">-- فئة رئيسية --</option>${cats.filter(c=>!c.parent && c.id !== m.id).map(c=>`<option value="${esc(c.id)}" ${m.parent===c.id?'selected':''}>${esc(c.emoji+' '+c.name)}</option>`).join('')}</select></div>`:''}
-        <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="${m.limit||0}"></div>
-        <div class="row"><button style="flex:1; padding:8px;">حفظ</button><button type="button" class="secondary" style="flex:1; padding:8px;" data-cancelcat>إلغاء</button></div>
-      </form>`;
-    } else {
-      row += `<div class="cat-item">
-        <div class="cat-info">${esc(m.emoji+' '+m.name)}${m.limit>0?` <span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(m.limit)})</span>`:''}</div>
-        <div class="cat-actions">
-          <button class="secondary" data-up="${esc(m.id)}" ${idx===0?'disabled':''}>⬆️</button>
-          <button class="secondary" data-down="${esc(m.id)}" ${idx===mainCats.length-1?'disabled':''}>⬇️</button>
-          <button class="secondary" data-editcat="${esc(m.id)}">تعديل</button>
-          <button class="danger" data-delcat="${esc(m.id)}">حذف</button>
-        </div>
-      </div>`;
-    }
-
-    if(subs.length) {
-      row += `<div class="sub-cat-wrap">`;
-      subs.forEach((s, sIdx) => {
-        if (s.id === editCat) {
-          row += `<form class="ecf card" data-id="${esc(s.id)}" style="margin:8px 0; padding:12px; background:var(--bg);">
-            <div class="field"><label>الاسم</label><input name="name" value="${esc(s.name)}" required maxlength="40"></div>
-            <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="${esc(s.emoji)}" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="${esc(s.color||'#14b8a6')}" style="height:44px; padding:4px;"></div></div>
-            <div class="field"><label>الفئة الأم</label><select name="parent"><option value="">-- فئة رئيسية --</option>${cats.filter(c=>!c.parent && c.id !== s.id).map(c=>`<option value="${esc(c.id)}" ${s.parent===c.id?'selected':''}>${esc(c.emoji+' '+c.name)}</option>`).join('')}</select></div>
-            <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="${s.limit||0}"></div>
-            <div class="row"><button style="flex:1; padding:8px;">حفظ</button><button type="button" class="secondary" style="flex:1; padding:8px;" data-cancelcat>إلغاء</button></div>
-          </form>`;
-        } else {
-          row += `<div class="cat-item" style="border-bottom:0; padding:8px 0;">
-            <div class="cat-info" style="font-weight:normal; font-size:14px;">↳ ${esc(s.emoji+' '+s.name)}${s.limit>0?` <span class="muted" style="font-size:11px;">(سقف ${fmt(s.limit)})</span>`:''}</div>
-            <div class="cat-actions">
-              <button class="secondary" style="padding:4px 6px; font-size:10px;" data-up="${esc(s.id)}" ${sIdx===0?'disabled':''}>⬆️</button>
-              <button class="secondary" style="padding:4px 6px; font-size:10px;" data-down="${esc(s.id)}" ${sIdx===subs.length-1?'disabled':''}>⬇️</button>
-              <button class="secondary" data-editcat="${esc(s.id)}">تعديل</button>
-              <button class="danger" data-delcat="${esc(s.id)}">حذف</button>
-            </div>
-          </div>`;
-        }
-      });
-      row += `</div>`;
-    }
-    return row;
-  }).join('');
-
-  return backBtn()+`
-    <div class="card">
-      <h2>🏷️ الفئات</h2>
-      <div style="margin-top:10px;">${catHtml || '<div class="empty">لا توجد فئات</div>'}</div>
-    </div>
-    <div class="card">
-      <h2>➕ إضافة فئة</h2>
-      <form id="cf">
-        <div class="field"><label>الاسم</label><input name="name" required maxlength="40"></div>
-        <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="✨" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="#14b8a6" style="height:44px; padding:4px;"></div></div>
-        <div class="field"><label>الفئة الأم</label><select name="parent"><option value="">-- فئة رئيسية --</option>${cats.filter(c=>!c.parent).map(c=>`<option value="${esc(c.id)}">${esc(c.emoji+' '+c.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="0"></div>
-        <button style="width:100%;">إضافة</button>
-      </form>
-    </div>`;
-}
-
 function themeView(){return backBtn()+`<div class="card"><h2>🎨 المظهر</h2><div class="field"><select id="theme"><option value="light"${cfg.theme==='light'?' selected':''}>فاتح (مريح)</option><option value="dark"${cfg.theme==='dark'?' selected':''}>داكن (ليلي)</option><option value="auto"${cfg.theme==='auto'?' selected':''}>حسب إعدادات النظام</option></select></div></div>`}
 function langView(){return backBtn()+`<div class="card"><h2>🌐 اللغة</h2><div class="field"><select id="lang"><option value="ar"${LANG==='ar'?' selected':''}>العربية</option><option value="fr"${LANG==='fr'?' selected':''}>Français</option><option value="en"${LANG==='en'?' selected':''}>English</option></select></div></div>`}
 
@@ -400,7 +370,7 @@ function trendHTML(){
   let mx=Math.max(...wk,1),u=Math.pow(10,Math.floor(Math.log10(mx))),nm=Math.ceil(mx/u)*u,W=320,H=170,L=42,Rr=20,T=12,B=26,X=i=>L+i*(W-L-Rr)/7,Y=v=>T+(1-v/nm)*(H-T-B),pts=wk.map((v,i)=>X(i)+','+Y(v)),
   grid=[0,1,2,3,4].map(k=>{let v=nm*k/4;return `<line x1="${L}" x2="${W-Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end" font-size="9" fill="var(--muted)">${round(v).toLocaleString(LOC[LANG])}</text>`}).join(''),
   lb=wk.map((v,i)=>{let d=new Date(t0-(7*(7-i)+6)*DAY);return `<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${p2(d.getUTCDate())}/${p2(d.getUTCMonth()+1)}</text>`}).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr;margin-top:10px;">${grid}<polygon points="${X(0)},${Y(0)} ${pts.join(' ')} ${X(7)},${Y(0)}" fill="var(--teal)" opacity="0.1"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round"/>${wk.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--teal)"/>`).join('')}${lb}</svg>`
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr;margin-top:10px;">${grid}<polygon points="${X(0)},${Y(0)} ${pts.join(' ')} ${X(7)},${Y(0)}" fill="var(--primary)" opacity="0.1"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round"/>${wk.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--primary)"/>`).join('')}${lb}</svg>`
 }
 
 function statView(){
@@ -463,7 +433,7 @@ function budgetHTML(){
   </div>
   <div class="card"><h2>🎯 الميزانية الشهرية</h2><div class="muted" style="margin-bottom:12px;">الفترة الحالية: ${pRange(mk)}</div>
   <form id="cfgf"><div class="grid"><div class="field"><label>الراتب الشهري</label><input name="salary" type="number" min="0" step=".01" value="${cfg.salary}"></div><div class="field"><label>حد الإنفاق</label><input name="budget" type="number" min="0" step=".01" value="${cfg.budget}"></div></div><div class="grid"><div class="field"><label>بداية الشهر (1–31)</label><input name="startDay" type="number" min="1" max="31" value="${cfg.startDay}"></div><div class="field"><label>تنبيه عند (%)</label><input name="warn" type="number" min="1" max="100" value="${cfg.warn}"></div></div><button style="width:100%; margin-top:8px;">حفظ الإعدادات</button></form>
-  ${b>0?`<div class="bar" style="margin-top:16px;"><i style="width:${pc}%; background:${left<0?'var(--danger)':'var(--teal)'}"></i></div><div style="text-align:center;">${left>=0?`المتبقي <b>${fmt(left)}</b> (${Math.round(pc)}٪)`:`<span class="red">تجاوزت بـ ${fmt(-left)}</span>`}</div>`:''}
+  ${b>0?`<div class="bar" style="margin-top:16px;"><i style="width:${pc}%; background:${left<0?'var(--danger)':'var(--primary)'}"></i></div><div style="text-align:center;">${left>=0?`المتبقي <b>${fmt(left)}</b> (${Math.round(pc)}٪)`:`<span class="red">تجاوزت بـ ${fmt(-left)}</span>`}</div>`:''}
   ${cfg.salary>0?`<div class="muted" style="text-align:center; margin-top:8px;">المتبقي من الراتب: ${fmt(cfg.salary-sp)}</div>`:''}
   </div>`+limitsHTML();
 }
@@ -492,7 +462,7 @@ function limitNote(id){
 }
 function limitsHTML(){
   let L=cats.filter(c=>c.limit>0);if(!L.length)return'';
-  return `<div class="card"><h2>🚧 سقف الفئات</h2>${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--teal)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div>`
+  return `<div class="card"><h2>🚧 سقف الفئات</h2>${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--primary)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div>`
 }
 
 function periodExp(k){return expenses.filter(e=>pKey(e.date)===k).sort((a,b)=>a.date<b.date?1:-1)}
@@ -527,7 +497,7 @@ async function checkPw(p){return!!cfg.pw&&(await kdf(String(p||''),cfg.pw.s))===
 let fails=0,until=0;
 function lockNow(){
   if(!cfg.pw||document.querySelector('#lock'))return;
-  let d=document.createElement('div');d.id='lock';d.style.cssText='position:fixed;inset:0;z-index:99;background:linear-gradient(135deg,#0f766e,#14b8a6);display:flex;align-items:center;justify-content:center;padding:24px';
+  let d=document.createElement('div');d.id='lock';d.style.cssText='position:fixed;inset:0;z-index:99;background:linear-gradient(135deg,#3730a3,#4f46e5);display:flex;align-items:center;justify-content:center;padding:24px';
   d.innerHTML='<form id="lf" style="background:#fff;color:#17212b;border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2);"><div style="font-size:44px">🔒</div><h2>📒 مصاريفي</h2><input id="lp" type="password" autocomplete="off" placeholder="كلمة المرور" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;margin:10px 0;font:inherit;background:#f8fafc;color:#17212b; text-align:center;"><button style="width:100%;">فتح</button><div id="le" style="color:#dc2626;min-height:22px;margin-top:8px; font-size:13px; font-weight:600;"></div></form>';
   document.body.appendChild(d);ico(d);tr(d);
   let f=d.querySelector('#lf'),i=d.querySelector('#lp'),er=d.querySelector('#le');
@@ -541,7 +511,7 @@ function lockNow(){
 }
 
 const LOC={ar:'ar-DZ',fr:'fr-FR',en:'en-US'},CUR_={ar:'د.ج',fr:'DA',en:'DZD'};
-const D={"مصاريفي": ["Mes dépenses", "My Expenses"], "إدارة أموالك ومصاريفك وديونك": ["Gérez votre argent, vos dépenses et vos dettes", "Manage your money, expenses and debts"], "الحساب البنكي": ["Compte bancaire", "Bank account"], "النقدية / الجيب": ["Espèces / Poche", "Cash / Pocket"], "المصاريف": ["Dépenses", "Expenses"], "الإعدادات": ["Paramètres", "Settings"], "→ الإعدادات": ["← Paramètres", "← Settings"], "إضافة مصروف": ["Ajouter une dépense", "Add expense"], "المبلغ": ["Montant", "Amount"], "المبلغ (د.ج)": ["Montant (DA)", "Amount (DZD)"], "طريقة الدفع": ["Mode de paiement", "Payment method"], "نقدية": ["Espèces", "Cash"], "بنك": ["Banque", "Bank"], "الفئة": ["Catégorie", "Category"], "التاريخ": ["Date", "Date"], "ملاحظة": ["Note", "Note"], "ملاحظة (اختياري)": ["Note (facultatif)", "Note (optional)"], "حفظ المصروف": ["Enregistrer la dépense", "Save expense"], "سجل المصاريف": ["Historique des dépenses", "Expense log"], "لا توجد مصاريف": ["Aucune dépense", "No expenses"], "بدون ملاحظة": ["Sans note", "No note"], "تعديل": ["Modifier", "Edit"], "حذف": ["Supprimer", "Delete"], "حفظ": ["Enregistrer", "Save"], "إلغاء": ["Annuler", "Cancel"], "إضافة": ["Ajouter", "Add"], "الدفع": ["Paiement", "Payment"], "تعديل الرصيد": ["Modifier le solde", "Edit balance"], "حفظ الرصيد": ["Enregistrer le solde", "Save balance"], "إيداع": ["Dépôt", "Deposit"], "المحفظة": ["Portefeuille", "Wallet"], "تحويل بين المحافظ": ["Transfert entre portefeuilles", "Transfer between wallets"], "من": ["De", "From"], "إلى": ["Vers", "To"], "تحويل": ["Transférer", "Transfer"], "لك": ["À recevoir", "Owed to me"], "عليك": ["À payer", "I owe"], "لك (أقرضته)": ["À recevoir (prêté)", "Owed to me (lent)"], "عليك (استلفت)": ["À payer (emprunté)", "I owe (borrowed)"], "لك (المتبقي)": ["À recevoir (reste)", "Owed to me (remaining)"], "عليك (المتبقي)": ["À payer (reste)", "I owe (remaining)"], "+ دفعة": ["+ Versement", "+ Payment"], "مسدد بالكامل": ["Entièrement remboursé", "Fully paid"], "المتبقي": ["Reste", "Remaining"], "المسدد": ["Remboursé", "Paid"], "مبلغ الدفعة": ["Montant du versement", "Payment amount"], "حفظ الدفعة": ["Enregistrer le versement", "Save payment"], "إضافة دين": ["Ajouter une dette", "Add debt"], "الشخص": ["Personne", "Person"], "النوع": ["Type", "Type"], "الديون لا تؤثر على أرصدة المحافظ، ويمكن تسديدها على دفعات": ["Les dettes n'affectent pas les soldes des portefeuilles et peuvent être remboursées par versements.", "Debts do not affect wallet balances and can be repaid in instalments."], "إضافة الدين": ["Ajouter la dette", "Add debt"], "سجل الديون": ["Historique des dettes", "Debt log"], "لا توجد ديون": ["Aucune dette", "No debts"], "الديون": ["Dettes", "Debts"], "الفئات": ["Catégories", "Categories"], "الاسم": ["Nom", "Name"], "إيموجي": ["Émoji", "Emoji"], "اللون": ["Couleur", "Color"], "سقف شهري (0 = بدون سقف)": ["Plafond mensuel (0 = sans plafond)", "Monthly limit (0 = none)"], "إضافة فئة": ["Ajouter une catégorie", "Add category"], "السقف": ["Plafond", "Limit"], "سقف الفئات": ["Plafonds des catégories", "Category limits"], "الإحصائيات": ["Statistiques", "Statistics"], "المحافظ": ["Portefeuilles", "Wallets"], "النسخ الاحتياطي": ["Sauvegarde", "Backup"], "الحماية": ["Sécurité", "Security"], "حماية التطبيق": ["Protection de l'application", "App protection"], "المظهر": ["Apparence", "Appearance"], "فاتح": ["Clair", "Light"], "داكن": ["Sombre", "Dark"], "حسب النظام": ["Selon le système", "System default"], "اللغة": ["Langue", "Language"], "توزيع المصاريف حسب الفئة": ["Répartition des dépenses par catégorie", "Expenses by category"], "لا توجد مصاريف في هذا الشهر": ["Aucune dépense ce mois-ci", "No expenses this month"], "اتجاه الإنفاق — آخر 8 أسابيع": ["Tendance des dépenses — 8 dernières semaines", "Spending trend — last 8 weeks"], "مقارنة شهرية": ["Comparaison mensuelle", "Monthly comparison"], "الشهر السابق": ["Mois précédent", "Previous month"], "الشهر المحدد": ["Mois sélectionné", "Selected month"], "التغيّر": ["Variation", "Change"], "جديد": ["Nouveau", "New"], "المجموع": ["Total", "Total"], "المجموع:": ["Total :", "Total:"], "الفترة (الشهر)": ["Période (mois)", "Period (month)"], "مصاريف الشهر": ["Dépenses du mois", "This month's expenses"], "المتبقي من الميزانية": ["Reste du budget", "Budget left"], "عدد المصاريف": ["Nombre de dépenses", "Number of expenses"], "الميزانية الشهرية": ["Budget mensuel", "Monthly budget"], "الراتب الشهري": ["Salaire mensuel", "Monthly salary"], "حد الإنفاق لهذا الشهر": ["Plafond de dépenses du mois", "Spending limit this month"], "يوم بداية الشهر (1–31)": ["Jour de début du mois (1–31)", "Month start day (1–31)"], "التنبيه عند (٪) من سقف الفئة": ["Alerte à (%) du plafond de la catégorie", "Alert at (%) of the category limit"], "يمكنك وضع 0 لإلغاء حد الإنفاق. الراتب والميزانية قيمتان منفصلتان.": ["Mettez 0 pour supprimer le plafond. Le salaire et le budget sont deux valeurs distinctes.", "Enter 0 to remove the spending limit. Salary and budget are separate values."], "الأرشيف": ["Archives", "Archive"], "أرشفة المصاريف الأقدم من (أشهر)": ["Archiver les dépenses de plus de (mois)", "Archive expenses older than (months)"], "أرشفة المصاريف القديمة": ["Archiver les anciennes dépenses", "Archive old expenses"], "استرجاع المؤرشف": ["Restaurer les archives", "Restore archived"], "حسب الفئة": ["Par catégorie", "By category"], "طعام": ["Alimentation", "Food"], "مواصلات": ["Transport", "Transport"], "فواتير": ["Factures", "Bills"], "صحة": ["Santé", "Health"], "تعليم": ["Éducation", "Education"], "ترفيه": ["Loisirs", "Entertainment"], "تسوق": ["Shopping", "Shopping"], "أخرى": ["Autres", "Other"], "غير مصنف": ["Non classé", "Uncategorized"], "النسخ الاحتياطي ": ["Sauvegarde", "Backup"], "تصدير JSON": ["Exporter JSON", "Export JSON"], "استيراد JSON": ["Importer JSON", "Import JSON"], "كلمة المرور مفعّلة": ["Mot de passe activé", "Password enabled"], "التطبيق غير محمي بكلمة مرور": ["L'application n'est pas protégée par mot de passe", "The app is not password protected"], "كلمة المرور الحالية": ["Mot de passe actuel", "Current password"], "كلمة المرور الجديدة (4 أحرف على الأقل)": ["Nouveau mot de passe (4 caractères minimum)", "New password (at least 4 characters)"], "كلمة المرور (4 أحرف على الأقل)": ["Mot de passe (4 caractères minimum)", "Password (at least 4 characters)"], "كلمة المرور": ["Mot de passe", "Password"], "تأكيد كلمة المرور": ["Confirmer le mot de passe", "Confirm password"], "تغيير كلمة المرور": ["Changer le mot de passe", "Change password"], "تفعيل الحماية": ["Activer la protection", "Enable protection"], "قفل التطبيق عند مغادرته": ["Verrouiller l'application en la quittant", "Lock the app when leaving it"], "قفل الآن": ["Verrouiller", "Lock now"], "إزالة كلمة المرور": ["Supprimer le mot de passe", "Remove password"], "تمنع هذه الحماية فتح التطبيق على هذا الهاتف، لكن البيانات نفسها غير مشفّرة. وإن نسيت كلمة المرور فلا استرجاع لها إلا بمسح بيانات الموقع وفقدان البيانات، فخذ نسخة JSON احتياطية.": ["Cette protection empêche l'ouverture de l'application sur ce téléphone, mais les données elles-mêmes ne sont pas chiffrées. Si vous oubliez le mot de passe, il n'y a pas de récupération possible sans effacer les données du site (et donc perdre vos données) : faites une sauvegarde JSON.", "This protection blocks opening the app on this phone, but the data itself is not encrypted. If you forget the password it cannot be recovered without clearing the site data (losing your data), so keep a JSON backup."], "فتح": ["Déverrouiller", "Unlock"], "تعذر حفظ البيانات": ["Impossible d'enregistrer les données", "Could not save data"], "تم الحفظ": ["Enregistré", "Saved"], "لا توجد مصاريف أقدم": ["Aucune dépense plus ancienne", "No older expenses"], "مبلغ غير صحيح": ["Montant invalide", "Invalid amount"], "الرصيد غير كاف": ["Solde insuffisant", "Insufficient balance"], "تم التعديل": ["Modifié", "Updated"], "تم تسجيل المصروف": ["Dépense enregistrée", "Expense saved"], "حذف هذا المصروف؟": ["Supprimer cette dépense ?", "Delete this expense?"], "تحقق من التحويل": ["Vérifiez le transfert", "Check the transfer"], "تم تحديث الأرصدة": ["Soldes mis à jour", "Balances updated"], "تمت إضافة الدين": ["Dette ajoutée", "Debt added"], "المبلغ أكبر من المتبقي": ["Le montant dépasse le reste", "Amount exceeds the remaining balance"], "تم تسديد الدين بالكامل": ["Dette entièrement remboursée", "Debt fully repaid"], "تم تسجيل الدفعة": ["Versement enregistré", "Payment recorded"], "حذف هذه الدفعة؟": ["Supprimer ce versement ?", "Delete this payment?"], "حذف هذا الدين نهائياً؟": ["Supprimer définitivement cette dette ?", "Delete this debt permanently?"], "أدخل اسماً": ["Saisissez un nom", "Enter a name"], "تمت إضافة الفئة": ["Catégorie ajoutée", "Category added"], "تم تعديل الفئة": ["Catégorie modifiée", "Category updated"], "يجب إبقاء فئة واحدة على الأقل": ["Conservez au moins une catégorie", "Keep at least one category"], "تم الاستيراد": ["Importation réussie", "Import complete"], "ملف غير صالح": ["Fichier invalide", "Invalid file"], "تم تصدير ملف Excel": ["Fichier Excel exporté", "Excel file exported"], "كلمة المرور الحالية غير صحيحة": ["Mot de passe actuel incorrect", "Current password is incorrect"], "4 أحرف على الأقل": ["4 caractères minimum", "At least 4 characters"], "كلمتا المرور غير متطابقتين": ["Les mots de passe ne correspondent pas", "Passwords do not match"], "تم حفظ كلمة المرور": ["Mot de passe enregistré", "Password saved"], "أدخل كلمة المرور الحالية": ["Saisissez le mot de passe actuel", "Enter the current password"], "إزالة كلمة المرور؟": ["Supprimer le mot de passe ?", "Remove the password?"], "تمت إزالة الحماية": ["Protection supprimée", "Protection removed"], "كلمة المرور غير صحيحة": ["Mot de passe incorrect", "Incorrect password"]};
+const D={"مصاريفي": ["Mes dépenses", "My Expenses"], "إدارة أموالك ومصاريفك بذكاء": ["Gérez votre argent et vos dépenses intelligemment", "Manage your money and expenses smartly"], "الحساب البنكي": ["Compte bancaire", "Bank account"], "النقدية / الجيب": ["Espèces / Poche", "Cash / Pocket"], "المصاريف": ["Dépenses", "Expenses"], "الإعدادات": ["Paramètres", "Settings"], "→ الإعدادات": ["← Paramètres", "← Settings"], "إضافة مصروف": ["Ajouter une dépense", "Add expense"], "المبلغ": ["Montant", "Amount"], "المبلغ (د.ج)": ["Montant (DA)", "Amount (DZD)"], "طريقة الدفع": ["Mode de paiement", "Payment method"], "نقدية": ["Espèces", "Cash"], "بنك": ["Banque", "Bank"], "الفئة": ["Catégorie", "Category"], "التاريخ": ["Date", "Date"], "ملاحظة": ["Note", "Note"], "ملاحظة (اختياري)": ["Note (facultatif)", "Note (optional)"], "حفظ المصروف": ["Enregistrer la dépense", "Save expense"], "سجل المصاريف": ["Historique des dépenses", "Expense log"], "لا توجد مصاريف": ["Aucune dépense", "No expenses"], "بدون ملاحظة": ["Sans note", "No note"], "تعديل": ["Modifier", "Edit"], "حذف": ["Supprimer", "Delete"], "حفظ": ["Enregistrer", "Save"], "إلغاء": ["Annuler", "Cancel"], "إضافة": ["Ajouter", "Add"], "الدفع": ["Paiement", "Payment"], "تعديل الرصيد": ["Modifier le solde", "Edit balance"], "حفظ الرصيد": ["Enregistrer le solde", "Save balance"], "إيداع": ["Dépôt", "Deposit"], "المحفظة": ["Portefeuille", "Wallet"], "تحويل بين المحافظ": ["Transfert entre portefeuilles", "Transfer between wallets"], "من": ["De", "From"], "إلى": ["Vers", "To"], "تحويل": ["Transférer", "Transfer"], "لك": ["À recevoir", "Owed to me"], "عليك": ["À payer", "I owe"], "لك (أقرضته)": ["À recevoir (prêté)", "Owed to me (lent)"], "عليك (استلفت)": ["À payer (emprunté)", "I owe (borrowed)"], "لك (المتبقي)": ["À recevoir (reste)", "Owed to me (remaining)"], "عليك (المتبقي)": ["À payer (reste)", "I owe (remaining)"], "+ دفعة": ["+ Versement", "+ Payment"], "مسدد بالكامل": ["Entièrement remboursé", "Fully paid"], "المتبقي": ["Reste", "Remaining"], "المسدد": ["Remboursé", "Paid"], "مبلغ الدفعة": ["Montant du versement", "Payment amount"], "حفظ الدفعة": ["Enregistrer le versement", "Save payment"], "إضافة دين": ["Ajouter une dette", "Add debt"], "الشخص": ["Personne", "Person"], "النوع": ["Type", "Type"], "الديون لا تؤثر على أرصدة المحافظ، ويمكن تسديدها على دفعات": ["Les dettes n'affectent pas les soldes des portefeuilles et peuvent être remboursées par versements.", "Debts do not affect wallet balances and can be repaid in instalments."], "إضافة الدين": ["Ajouter la dette", "Add debt"], "سجل الديون": ["Historique des dettes", "Debt log"], "لا توجد ديون": ["Aucune dette", "No debts"], "الديون": ["Dettes", "Debts"], "الفئات": ["Catégories", "Categories"], "الاسم": ["Nom", "Name"], "إيموجي": ["Émoji", "Emoji"], "اللون": ["Couleur", "Color"], "سقف شهري (0 = بدون سقف)": ["Plafond mensuel (0 = sans plafond)", "Monthly limit (0 = none)"], "إضافة فئة": ["Ajouter une catégorie", "Add category"], "السقف": ["Plafond", "Limit"], "سقف الفئات": ["Plafonds des catégories", "Category limits"], "الإحصائيات": ["Statistiques", "Statistics"], "المحافظ": ["Portefeuilles", "Wallets"], "النسخ الاحتياطي": ["Sauvegarde", "Backup"], "الحماية": ["Sécurité", "Security"], "حماية التطبيق": ["Protection de l'application", "App protection"], "المظهر": ["Apparence", "Appearance"], "فاتح": ["Clair", "Light"], "داكن": ["Sombre", "Dark"], "حسب النظام": ["Selon le système", "System default"], "اللغة": ["Langue", "Language"], "توزيع المصاريف حسب الفئة": ["Répartition des dépenses par catégorie", "Expenses by category"], "لا توجد مصاريف في هذا الشهر": ["Aucune dépense ce mois-ci", "No expenses this month"], "اتجاه الإنفاق — آخر 8 أسابيع": ["Tendance des dépenses — 8 dernières semaines", "Spending trend — last 8 weeks"], "مقارنة شهرية": ["Comparaison mensuelle", "Monthly comparison"], "الشهر السابق": ["Mois précédent", "Previous month"], "الشهر المحدد": ["Mois sélectionné", "Selected month"], "التغيّر": ["Variation", "Change"], "جديد": ["Nouveau", "New"], "المجموع": ["Total", "Total"], "المجموع:": ["Total :", "Total:"], "الفترة (الشهر)": ["Période (mois)", "Period (month)"], "مصاريف الشهر": ["Dépenses du mois", "This month's expenses"], "المتبقي من الميزانية": ["Reste du budget", "Budget left"], "عدد المصاريف": ["Nombre de dépenses", "Number of expenses"], "الميزانية الشهرية": ["Budget mensuel", "Monthly budget"], "الراتب الشهري": ["Salaire mensuel", "Monthly salary"], "حد الإنفاق لهذا الشهر": ["Plafond de dépenses du mois", "Spending limit this month"], "يوم بداية الشهر (1–31)": ["Jour de début du mois (1–31)", "Month start day (1–31)"], "التنبيه عند (٪) من سقف الفئة": ["Alerte à (%) du plafond de la catégorie", "Alert at (%) of the category limit"], "يمكنك وضع 0 لإلغاء حد الإنفاق. الراتب والميزانية قيمتان منفصلتان.": ["Mettez 0 pour supprimer le plafond. Le salaire et le budget sont deux valeurs distinctes.", "Enter 0 to remove the spending limit. Salary and budget are separate values."], "الأرشيف": ["Archives", "Archive"], "أرشفة المصاريف الأقدم من (أشهر)": ["Archiver les dépenses de plus de (mois)", "Archive expenses older than (months)"], "أرشفة المصاريف القديمة": ["Archiver les anciennes dépenses", "Archive old expenses"], "استرجاع المؤرشف": ["Restaurer les archives", "Restore archived"], "حسب الفئة": ["Par catégorie", "By category"], "طعام": ["Alimentation", "Food"], "مواصلات": ["Transport", "Transport"], "فواتير": ["Factures", "Bills"], "صحة": ["Santé", "Health"], "تعليم": ["Éducation", "Education"], "ترفيه": ["Loisirs", "Entertainment"], "تسوق": ["Shopping", "Shopping"], "أخرى": ["Autres", "Other"], "غير مصنف": ["Non classé", "Uncategorized"], "النسخ الاحتياطي ": ["Sauvegarde", "Backup"], "تصدير JSON": ["Exporter JSON", "Export JSON"], "استيراد JSON": ["Importer JSON", "Import JSON"], "كلمة المرور مفعّلة": ["Mot de passe activé", "Password enabled"], "التطبيق غير محمي بكلمة مرور": ["L'application n'est pas protégée par mot de passe", "The app is not password protected"], "كلمة المرور الحالية": ["Mot de passe actuel", "Current password"], "كلمة المرور الجديدة (4 أحرف على الأقل)": ["Nouveau mot de passe (4 caractères minimum)", "New password (at least 4 characters)"], "كلمة المرور (4 أحرف على الأقل)": ["Mot de passe (4 caractères minimum)", "Password (at least 4 characters)"], "كلمة المرور": ["Mot de passe", "Password"], "تأكيد كلمة المرور": ["Confirmer le mot de passe", "Confirm password"], "تغيير كلمة المرور": ["Changer le mot de passe", "Change password"], "تفعيل الحماية": ["Activer la protection", "Enable protection"], "قفل التطبيق عند مغادرته": ["Verrouiller l'application en la quittant", "Lock the app when leaving it"], "قفل الآن": ["Verrouiller", "Lock now"], "إزالة كلمة المرور": ["Supprimer le mot de passe", "Remove password"], "تمنع هذه الحماية فتح التطبيق على هذا الهاتف، لكن البيانات نفسها غير مشفّرة. وإن نسيت كلمة المرور فلا استرجاع لها إلا بمسح بيانات الموقع وفقدان البيانات، فخذ نسخة JSON احتياطية.": ["Cette protection empêche l'ouverture de l'application sur ce téléphone, mais les données elles-mêmes ne sont pas chiffrées. Si vous oubliez le mot de passe, il n'y a pas de récupération possible sans effacer les données du site (et donc perdre vos données) : faites une sauvegarde JSON.", "This protection blocks opening the app on this phone, but the data itself is not encrypted. If you forget the password it cannot be recovered without clearing the site data (losing your data), so keep a JSON backup."], "فتح": ["Déverrouiller", "Unlock"], "تعذر حفظ البيانات": ["Impossible d'enregistrer les données", "Could not save data"], "تم الحفظ": ["Enregistré", "Saved"], "لا توجد مصاريف أقدم": ["Aucune dépense plus ancienne", "No older expenses"], "مبلغ غير صحيح": ["Montant invalide", "Invalid amount"], "الرصيد غير كاف": ["Solde insuffisant", "Insufficient balance"], "تم التعديل": ["Modifié", "Updated"], "تم تسجيل المصروف": ["Dépense enregistrée", "Expense saved"], "حذف هذا المصروف؟": ["Supprimer cette dépense ?", "Delete this expense?"], "تحقق من التحويل": ["Vérifiez le transfert", "Check the transfer"], "تم تحديث الأرصدة": ["Soldes mis à jour", "Balances updated"], "تمت إضافة الدين": ["Dette ajoutée", "Debt added"], "المبلغ أكبر من المتبقي": ["Le montant dépasse le reste", "Amount exceeds the remaining balance"], "تم تسديد الدين بالكامل": ["Dette entièrement remboursée", "Debt fully repaid"], "تم تسجيل الدفعة": ["Versement enregistré", "Payment recorded"], "حذف هذه الدفعة؟": ["Supprimer ce versement ?", "Delete this payment?"], "حذف هذا الدين نهائياً؟": ["Supprimer définitivement cette dette ?", "Delete this debt permanently?"], "أدخل اسماً": ["Saisissez un nom", "Enter a name"], "تمت إضافة الفئة": ["Catégorie ajoutée", "Category added"], "تم تعديل الفئة": ["Catégorie modifiée", "Category updated"], "يجب إبقاء فئة واحدة على الأقل": ["Conservez au moins une catégorie", "Keep at least one category"], "تم الاستيراد": ["Importation réussie", "Import complete"], "ملف غير صالح": ["Fichier invalide", "Invalid file"], "تم تصدير ملف Excel": ["Fichier Excel exporté", "Excel file exported"], "كلمة المرور الحالية غير صحيحة": ["Mot de passe actuel incorrect", "Current password is incorrect"], "4 أحرف على الأقل": ["4 caractères minimum", "At least 4 characters"], "كلمتا المرور غير متطابقتين": ["Les mots de passe ne correspondent pas", "Passwords do not match"], "تم حفظ كلمة المرور": ["Mot de passe enregistré", "Password saved"], "أدخل كلمة المرور الحالية": ["Saisissez le mot de passe actuel", "Enter the current password"], "إزالة كلمة المرور؟": ["Supprimer le mot de passe ?", "Remove the password?"], "تمت إزالة الحماية": ["Protection supprimée", "Protection removed"], "كلمة المرور غير صحيحة": ["Mot de passe incorrect", "Incorrect password"], "إدارة وترتيب الفئات": ["Gérer et trier les catégories", "Manage & reorder categories"], "اضغط مطولاً على أي فئة واسحبها للأعلى أو الأسفل لترتيبها.": ["Appuyez longuement sur une catégorie et faites-la glisser vers le haut ou le bas pour la réorganiser.", "Press and hold any category and drag it up or down to reorder."], "➕ إضافة فئة جديدة": ["➕ Ajouter une nouvelle catégorie", "➕ Add new category"]};
 
 const PAT=[[new RegExp("^(.+) \\(رئيسي\\)$"),["$1 (Principal)","$1 (Main)"]],[new RegExp("^الفترة: (.+)$"),["Période : $1","Period: $1"]],[new RegExp("^الفترة الحالية: (.+)$"),["Période actuelle : $1","Current period: $1"]],[new RegExp("^مسدد (.+)$"),["Remboursé $1","Paid $1"]],[new RegExp("^المتبقي من الراتب: (.+)$"),["Reste du salaire : $1","Salary left: $1"]],[new RegExp("^تجاوزت الميزانية بـ (.+)$"),["Budget dépassé de $1","Over budget by $1"]],[new RegExp("^\\((\\d+)٪ مستخدم\\)$"),["($1 % utilisé)","($1% used)"]],[new RegExp("^تجاوزت السقف بـ (.+)$"),["Plafond dépassé de $1","Over the limit by $1"]],[new RegExp("^اقتربت من السقف \\((\\d+)٪\\)$"),["Proche du plafond ($1 %)","Close to the limit ($1%)"]],[new RegExp("^اقتربت من سقف (.+) \\((\\d+)٪\\)$"),["Proche du plafond « $1 » ($2 %)","Close to the “$1” limit ($2%)"]],[new RegExp("^تجاوزت سقف (.+)$"),["Plafond « $1 » dépassé","“$1” limit exceeded"]],[new RegExp("^المؤرشف: (\\d+) مصروف \\(يبقى في الإحصائيات ولا يظهر في السجل\\)$"),["Archivées : $1 dépense(s) (visibles dans les statistiques, masquées de l’historique)","Archived: $1 expense(s) (kept in statistics, hidden from the log)"]],[new RegExp("^تمت أرشفة (\\d+) مصروف$"),["$1 dépense(s) archivée(s)","$1 expense(s) archived"]],[new RegExp("^إصدار التطبيق: (.+)$"),["Version de l’application : $1","App version: $1"]],[new RegExp("^انتظر (\\d+) ثانية$"),["Patientez $1 s","Wait $1 s"]],[new RegExp("^حذف فئة «(.+)»؟ ستظهر مصاريفها السابقة كغير مصنفة\\.$"),["Supprimer la catégorie « $1 » ? Ses dépenses passées seront « Non classé ».","Delete the “$1” category? Its past expenses will show as Uncategorized."]],[new RegExp("^تقرير مصاريفي — (.+)$"),["Rapport Mes dépenses — $1","My Expenses report — $1"]],[new RegExp("^· سقف (.+)$"),["· Plafond $1","· Limit $1"]],[new RegExp("^← العودة للإعدادات$"),["← Retour aux paramètres","← Back to Settings"]],[new RegExp("^تابعة لـ \\(الفئة الأم\\)$"),["Parent à (catégorie parente)","Parent category"]],[new RegExp("^-- فئة رئيسية --$"),["-- Catégorie principale --","-- Main category --"]],[new RegExp("^\\(رئيسي\\)$"),["(Principal)","(Main)"]]];
 function T1(c){let L=LANG==='fr'?0:1,d=D[c];if(d)return d[L];for(const[re,v]of PAT)if(re.test(c))return c.replace(re,v[L]);if(c.includes(' · '))return c.split(' · ').map(x=>T(x)).join(' · ');let m=/^([^\p{L}\p{N}\s]+\s*)([\s\S]+)$/u.exec(c);if(m){let r=T1(m[2]);if(r!==m[2])return m[1]+r}return c}
@@ -558,7 +528,10 @@ function backupView(){return backBtn()+`<div class="card"><h2>النسخ الا�
 
 function bind(){
   let lg=document.querySelector('#lang');if(lg)lg.onchange=()=>{cfg.lang=lg.value;LANG=lg.value;save();render()};
-  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{tab=b.dataset.go;editCat=null;payDebt=null;editExp=null;render(true)});
+  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.go === 'categories') { openCatModal(); return; }
+    tab=b.dataset.go;editCat=null;payDebt=null;editExp=null;render(true)
+  });
   let pw1=document.querySelector('#pwf');if(pw1){pw1.onsubmit=async e=>{e.preventDefault();let f=new FormData(pw1),a=String(f.get('p1'));if(cfg.pw&&!(await checkPw(f.get('old'))))return msg('كلمة المرور الحالية غير صحيحة');if(a.length<4)return msg('4 أحرف على الأقل');if(a!==f.get('p2'))return msg('كلمتا المرور غير متطابقتين');cfg.pw=await newPw(a);save();render();msg('تم حفظ كلمة المرور')};let rm=document.querySelector('#rmpw');if(rm)rm.onclick=async()=>{if(!(await checkPw(pw1.elements.old.value)))return msg('أدخل كلمة المرور الحالية');if(!confirm('إزالة كلمة المرور؟'))return;delete cfg.pw;save();render();msg('تمت إزالة الحماية')};let ln=document.querySelector('#lockNow');if(ln)ln.onclick=lockNow;let al=document.querySelector('#al');if(al)al.onchange=()=>{cfg.autoLock=al.checked;save()}}
   let xp=document.querySelector('#xpdf');if(xp)xp.onclick=exportPdf;
   let xl=document.querySelector('#xls');if(xl)xl.onclick=exportXls;
@@ -581,19 +554,201 @@ function bind(){
   document.querySelectorAll('.pf').forEach(fm=>fm.onsubmit=e=>{e.preventDefault();let f=new FormData(fm),d=debts.find(x=>x.id===fm.dataset.id),a=round(f.get('amount'));if(!d)return;if(a<=0)return msg('مبلغ غير صحيح');if(a>rem(d))return msg('المبلغ أكبر من المتبقي');d.payments.push({id:id(),amount:a,date:f.get('date')});payDebt=null;save();render();msg(rem(d)<=0?'تم تسديد الدين بالكامل':'تم تسجيل الدفعة')});
   document.querySelectorAll('[data-delpay]').forEach(b=>b.onclick=()=>{let d=debts.find(x=>x.id===b.dataset.debt);if(!d||!confirm('حذف هذه الدفعة؟'))return;d.payments=d.payments.filter(x=>x.id!==b.dataset.delpay);save();render()});
   document.querySelectorAll('[data-deldebt]').forEach(b=>b.onclick=()=>{if(!confirm('حذف هذا الدين نهائياً؟'))return;debts=debts.filter(x=>x.id!==b.dataset.deldebt);save();render()});
+
+  // Modal Add Form
+  let cf=document.querySelector('#cf');if(cf)cf.onsubmit=e=>{e.preventDefault();let f=new FormData(cf),n=f.get('name').trim();if(!n)return msg('أدخل اسماً');cats.push({id:id(),name:n,emoji:f.get('emoji').trim()||'✨',color:f.get('color'),limit:Math.max(0,round(f.get('limit'))),parent:f.get('parent')||null});save();renderCatModalList(); cf.reset(); toggleAddCatForm(); msg('تمت إضافة الفئة')};
   
-  let cf=document.querySelector('#cf');if(cf)cf.onsubmit=e=>{e.preventDefault();let f=new FormData(cf),n=f.get('name').trim();if(!n)return msg('أدخل اسماً');cats.push({id:id(),name:n,emoji:f.get('emoji').trim()||'✨',color:f.get('color'),limit:Math.max(0,round(f.get('limit'))),parent:f.get('parent')||null});save();render();msg('تمت إضافة الفئة')};
-  document.querySelectorAll('[data-editcat]').forEach(b=>b.onclick=()=>{editCat=b.dataset.editcat;render()});
-  document.querySelectorAll('[data-cancelcat]').forEach(b=>b.onclick=()=>{editCat=null;render()});
-  document.querySelectorAll('.ecf').forEach(fm=>fm.onsubmit=e=>{e.preventDefault();let f=new FormData(fm),c=cats.find(x=>x.id===fm.dataset.id),n=f.get('name').trim();if(!c)return;if(!n)return msg('أدخل اسماً');let newParent=f.get('parent')||null;if(newParent)cats.filter(x=>x.parent===c.id).forEach(x=>x.parent=null);c.name=n;c.emoji=f.get('emoji').trim()||'✨';c.color=f.get('color');c.limit=Math.max(0,round(f.get('limit')));c.parent=newParent;editCat=null;save();render();msg('تم تعديل الفئة')});
-  document.querySelectorAll('[data-delcat]').forEach(b=>b.onclick=()=>{if(cats.length<=1)return msg('يجب إبقاء فئة واحدة على الأقل');let c=cats.find(x=>x.id===b.dataset.delcat);if(!c||!confirm('حذف فئة «'+c.name+'»؟ ستظهر مصاريفها السابقة كغير مصنفة.'))return;cats.filter(x=>x.parent===c.id).forEach(x=>x.parent=null);cats=cats.filter(x=>x.id!==c.id);save();render()});
-  document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{let c=cats.find(x=>x.id===b.dataset.up);if(!c)return;let siblings=cats.filter(x=>x.parent===c.parent);let idx=siblings.indexOf(c);if(idx<=0)return;let prev=siblings[idx-1];let gi=cats.indexOf(c), pi=cats.indexOf(prev);cats[gi]=prev;cats[pi]=c;save();render();});
-  document.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>{let c=cats.find(x=>x.id===b.dataset.down);if(!c)return;let siblings=cats.filter(x=>x.parent===c.parent);let idx=siblings.indexOf(c);if(idx<0||idx>=siblings.length-1)return;let next=siblings[idx+1];let gi=cats.indexOf(c), ni=cats.indexOf(next);cats[gi]=next;cats[ni]=c;save();render();});
+  // Modal Edit / Delete buttons
+  document.querySelectorAll('.edit-cat-btn').forEach(b=>b.onclick=(e)=>{e.stopPropagation(); editCat=b.dataset.id; renderCatModalList();});
+  document.querySelectorAll('.cancel-edit-cat').forEach(b=>b.onclick=(e)=>{e.stopPropagation(); editCat=null; renderCatModalList();});
+  document.querySelectorAll('.del-cat-btn').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    if(cats.length<=1)return msg('يجب إبقاء فئة واحدة على الأقل');
+    let c=cats.find(x=>x.id===b.dataset.id);
+    if(!c||!confirm('حذف فئة «'+c.name+'»؟ ستظهر مصاريفها السابقة كغير مصنفة.'))return;
+    cats.filter(x=>x.parent===c.id).forEach(x=>x.parent=null);
+    cats=cats.filter(x=>x.id!==c.id);save();renderCatModalList();render();
+  });
+  document.querySelectorAll('.ecf').forEach(fm=>fm.onsubmit=(e)=>{
+    e.preventDefault();
+    let f=new FormData(fm),c=cats.find(x=>x.id===fm.dataset.id),n=f.get('name').trim();
+    if(!c)return;if(!n)return msg('أدخل اسماً');
+    let newParent=f.get('parent')||null;
+    if(newParent)cats.filter(x=>x.parent===c.id).forEach(x=>x.parent=null);
+    c.name=n;c.emoji=f.get('emoji').trim()||'✨';c.color=f.get('color');c.limit=Math.max(0,round(f.get('limit')));c.parent=newParent;
+    editCat=null;save();renderCatModalList();render();msg('تم تعديل الفئة');
+  });
 
   let ex=document.querySelector('#export');if(ex)ex.onclick=()=>{let blob=new Blob([JSON.stringify({version:9,expenses,wallets,debts,cats,cfg:Object.assign({},cfg,{pw:undefined})})],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='masarifi-backup.json';a.click();URL.revokeObjectURL(u)};
   let im=document.querySelector('#import'),file=document.querySelector('#file');if(im)im.onclick=()=>file.click();if(file)file.onchange=async()=>{try{let d=JSON.parse(await file.files[0].text());if(!Array.isArray(d.expenses)||!Array.isArray(d.debts)||!(Array.isArray(d.cats)||Array.isArray(d.customCats))||!d.wallets||!['account','cash'].every(k=>Number.isFinite(Number(d.wallets[k])))||!d.expenses.every(x=>Number(x.amount)>0&&['account','cash'].includes(x.wallet))||!d.debts.every(x=>Number(x.amount)>0&&['lend','borrow'].includes(x.type)))throw 0;expenses=d.expenses;debts=d.debts.map(migr);let nc=Array.isArray(d.cats)?d.cats:defaults.concat(d.customCats);nc=nc.filter(c=>c&&c.id&&c.name&&c.emoji);nc.forEach(c=>{if(c.parent===undefined)c.parent=null});cats=nc.length?nc:defaults.slice();if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80))});wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};save();render();msg('تم الاستيراد')}catch{msg('ملف غير صالح')}}
 }
 
+// --- Drag & Drop Logic for Categories ---
+let dragEl = null, dragPlaceholder = null, startY = 0;
+
+function openCatModal() {
+  document.getElementById('catModal').classList.add('active');
+  renderCatModalList();
+  toggleAddCatForm(false);
+}
+
+function closeCatModal() {
+  document.getElementById('catModal').classList.remove('active');
+  render(); // Refresh main view
+}
+
+function toggleAddCatForm(show) {
+  let w = document.getElementById('addCatWrapper');
+  if(show === undefined) {
+    w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  } else {
+    w.style.display = show ? 'block' : 'none';
+  }
+  if (w.style.display === 'block') {
+    let opts = `<option value="">-- فئة رئيسية --</option>`;
+    cats.filter(c=>!c.parent).forEach(c => {
+      opts += `<option value="${esc(c.id)}">${esc(c.emoji+' '+c.name)}</option>`;
+    });
+    document.querySelector('select[name="parent"]').innerHTML = opts;
+  }
+}
+
+function renderCatModalList() {
+  let list = document.getElementById('dragList');
+  list.innerHTML = '';
+  
+  let mains = cats.filter(c=>!c.parent);
+  mains.forEach(m => {
+    let subs = cats.filter(c=>c.parent === m.id);
+    
+    // Render Main Category
+    if(m.id === editCat) {
+      list.innerHTML += `<form class="ecf drag-item" data-id="${esc(m.id)}" style="flex-direction:column; align-items:stretch; cursor:default;">
+        <div class="field"><label>الاسم</label><input name="name" value="${esc(m.name)}" required maxlength="40"></div>
+        <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="${esc(m.emoji)}" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="${esc(m.color||'#4f46e5')}" style="height:44px; padding:4px;"></div></div>
+        <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="${m.limit||0}"></div>
+        <div class="row"><button style="flex:1; padding:8px;">حفظ</button><button type="button" class="secondary cancel-edit-cat" style="flex:1; padding:8px;">إلغاء</button></div>
+      </form>`;
+    } else {
+      list.innerHTML += `<div class="drag-item" data-id="${esc(m.id)}">
+        <div class="cat-name">${esc(m.emoji+' '+m.name)}${m.limit>0?` <span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(m.limit)})</span>`:''}</div>
+        <div class="cat-actions">
+          <button class="secondary edit-cat-btn" data-id="${esc(m.id)}">تعديل</button>
+          <button class="danger del-cat-btn" data-id="${esc(m.id)}">حذف</button>
+        </div>
+      </div>`;
+    }
+    
+    // Render Subcategories
+    subs.forEach(s => {
+      if(s.id === editCat) {
+        list.innerHTML += `<form class="ecf drag-item sub-cat-item" data-id="${esc(s.id)}" style="flex-direction:column; align-items:stretch; cursor:default;">
+          <div class="field"><label>الاسم</label><input name="name" value="${esc(s.name)}" required maxlength="40"></div>
+          <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="${esc(s.emoji)}" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="${esc(s.color||'#4f46e5')}" style="height:44px; padding:4px;"></div></div>
+          <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="${s.limit||0}"></div>
+          <div class="row"><button style="flex:1; padding:8px;">حفظ</button><button type="button" class="secondary cancel-edit-cat" style="flex:1; padding:8px;">إلغاء</button></div>
+        </form>`;
+      } else {
+        list.innerHTML += `<div class="drag-item sub-cat-item" data-id="${esc(s.id)}">
+          <div class="cat-name">↳ ${esc(s.emoji+' '+s.name)}${s.limit>0?` <span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(s.limit)})</span>`:''}</div>
+          <div class="cat-actions">
+            <button class="secondary edit-cat-btn" data-id="${esc(s.id)}">تعديل</button>
+            <button class="danger del-cat-btn" data-id="${esc(s.id)}">حذف</button>
+          </div>
+        </div>`;
+      }
+    });
+  });
+
+  // Re-bind events for the new HTML
+  bind();
+  ico(list); tr(list);
+
+  // Attach pointer events for Drag & Drop
+  document.querySelectorAll('.drag-item').forEach(item => {
+    if(item.tagName === 'FORM') return; // Don't drag forms
+    item.addEventListener('pointerdown', e => {
+      if(e.target.closest('button')) return; // Ignore clicks on buttons
+      dragEl = item;
+      startY = e.clientY;
+      
+      dragPlaceholder = document.createElement('div');
+      dragPlaceholder.style.height = `${item.offsetHeight}px`;
+      dragPlaceholder.style.margin = '8px 0';
+      dragPlaceholder.style.borderRadius = '12px';
+      dragPlaceholder.style.background = 'var(--line)';
+      dragPlaceholder.style.opacity = '0.5';
+      
+      item.after(dragPlaceholder);
+      
+      item.classList.add('dragging');
+      item.style.pointerEvents = 'none';
+      item.style.position = 'relative';
+      
+      document.addEventListener('pointermove', onPointerMove);
+      document.addEventListener('pointerup', onPointerUp);
+    });
+  });
+}
+
+function onPointerMove(e) {
+  if(!dragEl) return;
+  e.preventDefault();
+  const dy = e.clientY - startY;
+  dragEl.style.transform = `translateY(${dy}px)`;
+  
+  const elements = document.elementsFromPoint(e.clientX, e.clientY);
+  const target = elements.find(el => el.classList.contains('drag-item') && el !== dragEl && el.tagName !== 'FORM');
+  
+  if(target) {
+    const targetRect = target.getBoundingClientRect();
+    const dragRect = dragEl.getBoundingClientRect();
+    const targetMid = targetRect.top + targetRect.height / 2;
+    const dragMid = dragRect.top + dragRect.height / 2;
+    
+    if(dragMid < targetMid) {
+      target.before(dragPlaceholder);
+    } else {
+      target.after(dragPlaceholder);
+    }
+  }
+}
+
+function onPointerUp(e) {
+  if(!dragEl) return;
+  dragEl.style.cssText = '';
+  dragEl.classList.remove('dragging');
+  dragPlaceholder.before(dragEl);
+  dragPlaceholder.remove();
+  
+  dragEl = null;
+  dragPlaceholder = null;
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup', onPointerUp);
+  
+  saveNewCatOrder();
+}
+
+function saveNewCatOrder() {
+  const list = document.getElementById('dragList');
+  const ids = Array.from(list.querySelectorAll('.drag-item')).map(el => el.dataset.id);
+  const newCats = [];
+  ids.forEach(id => {
+    const c = cats.find(x => x.id === id);
+    if(c) newCats.push(c);
+  });
+  cats = newCats;
+  save();
+}
+
+// Initial render
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;editCat=null;payDebt=null;editExp=null;render(true)});
-if(cfg.pw)lockNow();document.addEventListener('visibilitychange',()=>{if(document.hidden&&cfg.pw&&cfg.autoLock!==false)lockNow()});render();if('serviceWorker'in navigator){let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;location.reload()}});addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+if(cfg.pw)lockNow();
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cfg.pw&&cfg.autoLock!==false)lockNow()});
+render();
+if('serviceWorker'in navigator){
+  let had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;location.reload()}});
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))
+}
 </script></body></html>
