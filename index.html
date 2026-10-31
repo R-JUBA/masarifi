@@ -157,7 +157,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=46;
+const CURRENCY='د.ج'; const VER=48;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -166,7 +166,7 @@ const localISO=(d=new Date())=>{let x=new Date(d.getTime());x.setMinutes(x.getMi
 const today=()=>localISO();
 
 function read(k,d){try{let x=localStorage.getItem(k);return x===null?d:JSON.parse(x)}catch{return d}}
-let expenses=read(K.e,[]), wallets=read(K.w,{account:0,cash:0}), debts=read(K.d,[]), cats=read(K.c2,null), recurring=read(K.r,[]), moves=read(K.m,[]), goals=read(K.g,[]), tab='expenses', editCat=null, payDebt=null, statMonth='', editExp=null, searchQuery='', filterCat='all', cfg=Object.assign({salary:0,budget:0,months:6,startDay:1,warn:80,theme:'light',autoLock:true,lang:'ar',rolloverBudget:false,autoArchive:false,allowNeg:false,lastBackup:0},read(K.s,{}));
+let expenses=read(K.e,[]), wallets=read(K.w,{account:0,cash:0}), debts=read(K.d,[]), cats=read(K.c2,null), recurring=read(K.r,[]), moves=read(K.m,[]), goals=read(K.g,[]), tab='expenses', editCat=null, payDebt=null, statMonth='',cmpMonth='', editExp=null, searchQuery='', filterCat='all', cfg=Object.assign({salary:0,budget:0,months:6,startDay:1,warn:80,theme:'light',autoLock:true,lang:'ar',rolloverBudget:false,autoArchive:false,allowNeg:false,lastBackup:0},read(K.s,{}));
 
 if(!Array.isArray(cats)||!cats.length)cats=defaults.concat(read(K.c,[]));
 cats.forEach(c=>{if(c.parent===undefined)c.parent=null;});
@@ -281,7 +281,6 @@ function settingsView(){
     </div>
   </div>
   <div class="card" style="border-color: var(--danger); margin-top: 24px;">
-    <h2 style="color: var(--danger);">⚠️ منطقة الخطر</h2>
     <button id="deleteAllDataBtn" class="danger" style="width: 100%;">🗑️ حذف جميع البيانات نهائياً</button>
     <div class="muted" style="margin-top: 8px; font-size: 12px; text-align:center;">سيتم مسح جميع المصاريف، الديون، المحافظ، والإعدادات، وسيعود التطبيق كالجديد.</div>
   </div>
@@ -445,17 +444,21 @@ function donutHTML(rows,tot){
 }
 
 function trendHTML(){
-  let t0=ts(today()),wk=Array(8).fill(0);
-  expenses.forEach(e=>{if(!e.date)return;let df=Math.floor((t0-ts(e.date))/DAY);if(df>=0&&df<56)wk[7-Math.floor(df/7)]+=Number(e.amount)});wk=wk.map(round);
-  let mx=Math.max(...wk,1),u=Math.pow(10,Math.floor(Math.log10(mx))),nm=Math.ceil(mx/u)*u,W=320,H=170,L=42,Rr=20,T=12,B=26,X=i=>L+i*(W-L-Rr)/7,Y=v=>T+(1-v/nm)*(H-T-B),pts=wk.map((v,i)=>X(i)+','+Y(v)),
+  const mk=pKey(today()),[st,en]=pBounds(mk),t0=ts(today());
+  const N=Math.max(1,Math.min(Math.round((en-st)/DAY)+1,Math.round((t0-st)/DAY)+1));
+  let d=Array(N).fill(0);
+  expenses.forEach(e=>{if(!e.date||mOf(e)!==mk)return;let i=Math.round((ts(String(e.date).slice(0,10))-st)/DAY);if(i>=0&&i<N)d[i]+=Number(e.amount)});
+  let a=0,c=d.map(v=>{a+=v;return round(a)});
+  let mx=Math.max(...c,1),u=Math.pow(10,Math.floor(Math.log10(mx))),nm=Math.ceil(mx/u)*u,W=320,H=170,L=42,Rr=20,T=12,B=26,X=i=>N>1?L+i*(W-L-Rr)/(N-1):L+(W-L-Rr)/2,Y=v=>T+(1-v/nm)*(H-T-B),pts=c.map((v,i)=>X(i)+','+Y(v)),
   grid=[0,1,2,3,4].map(k=>{let v=nm*k/4;return `<line x1="${L}" x2="${W-Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end" font-size="9" fill="var(--muted)">${round(v).toLocaleString(LOC[LANG])}</text>`}).join(''),
-  lb=wk.map((v,i)=>{let d=new Date(t0-(7*(7-i)+6)*DAY);return `<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${p2(d.getUTCDate())}/${p2(d.getUTCMonth()+1)}</text>`}).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr;margin-top:10px;">${grid}<polygon points="${X(0)},${Y(0)} ${pts.join(' ')} ${X(7)},${Y(0)}" fill="var(--primary)" opacity="0.1"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round"/>${wk.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--primary)"/>`).join('')}${lb}</svg>`
+  step=Math.max(1,Math.ceil(N/6)),
+  lb=c.map((v,i)=>{if(i%step)return'';let dt=new Date(st+i*DAY);return `<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${p2(dt.getUTCDate())}/${p2(dt.getUTCMonth()+1)}</text>`}).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr;margin-top:10px;">${grid}<polygon points="${X(0)},${Y(0)} ${pts.join(' ')} ${X(N-1)},${Y(0)}" fill="var(--primary)" opacity="0.1"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round"/>${N<=16?c.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--primary)"/>`).join(''):`<circle cx="${X(N-1)}" cy="${Y(c[N-1])}" r="3.5" fill="var(--primary)"/>`}${lb}</svg>`
 }
 
 function statView(){
   let ms=expenses.filter(e=>mOf(e)===smo()),tot=sum(ms),by={};ms.forEach(e=>by[e.category]=round((by[e.category]||0)+Number(e.amount)));
-  let rows=Object.entries(by).map(([k,v])=>({c:cat(k),v})).sort((a,b)=>b.v-a.v),pm=prevMonth(smo()),pt=sum(expenses.filter(e=>mOf(e)===pm)),ch=pt>0?Math.round((tot-pt)/pt*100):null,
+  let rows=Object.entries(by).map(([k,v])=>({c:cat(k),v})).sort((a,b)=>b.v-a.v),pt=cmpMonth?sum(expenses.filter(e=>mOf(e)===cmpMonth)):0,ch=pt>0?Math.round((tot-pt)/pt*100):null,
   badge=ch===null?(tot>0?'<span class="muted">جديد</span>':'<span class="muted">—</span>'):`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`;
   
   const isCurrentMonth = smo() === pKey(today());
@@ -467,7 +470,6 @@ function statView(){
 
   return backBtn()+`
   <div class="card">
-    <div class="field"><label>📅 الفترة (الشهر)</label><input id="sm" type="month" value="${esc(smo())}"></div>
     <div class="muted">الفترة: ${pRange(smo())}</div>
     <div class="row" style="margin-top:16px; flex-wrap:wrap; gap:8px;">
       <button id="xpdf" style="flex:1;">📄 PDF</button>
@@ -484,11 +486,13 @@ function statView(){
   </div>
   <div class="card"><h2>📈 اتجاه الإنفاق</h2>${trendHTML()}</div>
   <div class="card"><h2>⚖️ مقارنة شهرية</h2>
+    <div class="field"><label>قارن مع شهر</label><input id="cm" type="month" value="${esc(cmpMonth)}"></div>
+    ${cmpMonth?`<div class="muted" style="margin-bottom:8px;">الفترة: ${pRange(cmpMonth)}</div>
     <div class="grid">
-      <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الشهر السابق</div><b style="font-size:16px;">${fmt(pt)}</b></div>
-      <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الشهر المحدد</div><b style="font-size:16px;">${fmt(tot)}</b></div>
+      <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الشهر المحدد</div><b style="font-size:16px;">${fmt(pt)}</b></div>
+      <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الفترة الحالية</div><b style="font-size:16px;">${fmt(tot)}</b></div>
     </div>
-    <div class="row" style="margin-top:12px;"><span class="muted">نسبة التغيّر</span>${badge}</div>
+    <div class="row" style="margin-top:12px;"><span class="muted">نسبة التغيّر</span>${badge}</div>`:'<div class="muted">اختر شهراً لمقارنته بالفترة الحالية.</div>'}
   </div>`;
 }
 
@@ -679,7 +683,7 @@ const PAT=[[new RegExp("^(.+) \\(رئيسي\\)$"),["$1 (Principal)","$1 (Main)"]
 Object.assign(D,{"تفاصيل اختيارية...": ["Détails facultatifs...", "Optional details..."], "النقدية": ["Espèces", "Cash"], "حفظ الرصيد الإجمالي": ["Enregistrer le solde total", "Save total balance"], "الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.": ["Les dettes n’affectent pas automatiquement les soldes ; elles sont enregistrées comme engagements financiers.", "Debts do not affect balances automatically; they are recorded as financial obligations."], "العمليات": ["Opérations", "Transactions"], "حد الإنفاق الأساسي": ["Plafond de dépenses de base", "Base spending limit"], "بداية الشهر (1–31)": ["Début du mois (1–31)", "Month start (1–31)"], "تنبيه عند (%)": ["Alerte à (%)", "Alert at (%)"], "حفظ الإعدادات": ["Enregistrer les paramètres", "Save settings"], "توزيع المصاريف": ["Répartition des dépenses", "Expense breakdown"], "اتجاه الإنفاق": ["Tendance des dépenses", "Spending trend"], "نسبة التغيّر": ["Variation en %", "Change %"], "مصروف متكرر": ["Dépense récurrente", "Recurring expense"], "حذف هذا المصروف المتكرر؟": ["Supprimer cette dépense récurrente ?", "Delete this recurring expense?"], "بيانات غير صحيحة": ["Données invalides", "Invalid data"], "إضافة فئة جديدة": ["Ajouter une nouvelle catégorie", "Add new category"], "سيستبدل الاستيراد البيانات الحالية. متابعة؟": ["L’importation remplacera les données actuelles. Continuer ?", "Importing will replace the current data. Continue?"], "تم تصدير النسخة الاحتياطية": ["Sauvegarde exportée", "Backup exported"]});
 PAT.push([new RegExp("^يوم (\\d+)$"),["Jour $1","Day $1"]],[new RegExp("^تجاوزت بـ (.+)$"),["Dépassé de $1","Over by $1"]],[new RegExp("^عرض المزيد \\((\\d+)\\)$"),["Afficher plus ($1)","Show more ($1)"]]);
 Object.assign(D,{"السماح برصيد سالب": ["Autoriser un solde négatif", "Allow negative balance"], "يوجد تحديث جديد": ["Mise à jour disponible", "Update available"], "تحديث الآن": ["Mettre à jour", "Update now"], "لم تأخذ نسخة احتياطية منذ مدة": ["Aucune sauvegarde récente", "No recent backup"], "نسخ الآن": ["Sauvegarder", "Back up now"]});PAT.push([new RegExp("^استهلكت (\\d+)٪ من الميزانية$"),["Vous avez utilisé $1 % du budget","You used $1% of the budget"]]);
-Object.assign(D,{"سجل الحركات": ["Historique des mouvements", "Transactions log"], "لا توجد حركات": ["Aucun mouvement", "No transactions"], "حذف هذه الحركة وعكس أثرها على الأرصدة؟": ["Supprimer ce mouvement et annuler son effet sur les soldes ?", "Delete this transaction and reverse its effect on balances?"], "المصدر": ["Source", "Source"], "راتب، عمل إضافي...": ["Salaire, travail extra...", "Salary, extra work..."], "دخل هذه الفترة:": ["Revenus de la période :", "Income this period:"], "الصافي:": ["Net :", "Net:"], "أهداف الادخار": ["Objectifs d’épargne", "Savings goals"], "هدف جديد": ["Nouvel objectif", "New goal"], "اسم الهدف": ["Nom de l’objectif", "Goal name"], "المبلغ المستهدف": ["Montant cible", "Target amount"], "التاريخ المستهدف (اختياري)": ["Date cible (facultatif)", "Target date (optional)"], "حفظ الهدف": ["Enregistrer l’objectif", "Save goal"], "الادخار هنا للتتبع فقط ولا يخصم من الأرصدة.": ["L’épargne ici sert au suivi uniquement et n’est pas déduite des soldes.", "Savings here are for tracking only and are not deducted from balances."], "أهدافي": ["Mes objectifs", "My goals"], "لا توجد أهداف": ["Aucun objectif", "No goals"], "+ ادخار": ["+ Épargner", "+ Save"], "تم بلوغ الهدف": ["Objectif atteint", "Goal reached"], "حذف هذا الهدف؟": ["Supprimer cet objectif ?", "Delete this goal?"], "بلغت هدفك!": ["Objectif atteint !", "Goal reached!"]});Object.assign(D,{"أرشفة الفترة السابقة تلقائياً عند بداية فترة جديدة": ["Archiver automatiquement la période précédente au début d’une nouvelle période", "Automatically archive the previous period when a new one starts"], "تُخفى مصاريف الفترات السابقة من السجل وتبقى في الإحصائيات والميزانية.": ["Les dépenses des périodes précédentes sont masquées de l’historique mais restent dans les statistiques et le budget.", "Previous periods' expenses are hidden from the log but stay in statistics and budget."]});PAT.push([new RegExp("^يلزم (.+) شهرياً$"),["Il faut $1 par mois","Need $1 per month"]]);
+Object.assign(D,{"سجل الحركات": ["Historique des mouvements", "Transactions log"], "لا توجد حركات": ["Aucun mouvement", "No transactions"], "حذف هذه الحركة وعكس أثرها على الأرصدة؟": ["Supprimer ce mouvement et annuler son effet sur les soldes ?", "Delete this transaction and reverse its effect on balances?"], "المصدر": ["Source", "Source"], "راتب، عمل إضافي...": ["Salaire, travail extra...", "Salary, extra work..."], "دخل هذه الفترة:": ["Revenus de la période :", "Income this period:"], "الصافي:": ["Net :", "Net:"], "أهداف الادخار": ["Objectifs d’épargne", "Savings goals"], "هدف جديد": ["Nouvel objectif", "New goal"], "اسم الهدف": ["Nom de l’objectif", "Goal name"], "المبلغ المستهدف": ["Montant cible", "Target amount"], "التاريخ المستهدف (اختياري)": ["Date cible (facultatif)", "Target date (optional)"], "حفظ الهدف": ["Enregistrer l’objectif", "Save goal"], "الادخار هنا للتتبع فقط ولا يخصم من الأرصدة.": ["L’épargne ici sert au suivi uniquement et n’est pas déduite des soldes.", "Savings here are for tracking only and are not deducted from balances."], "أهدافي": ["Mes objectifs", "My goals"], "لا توجد أهداف": ["Aucun objectif", "No goals"], "+ ادخار": ["+ Épargner", "+ Save"], "تم بلوغ الهدف": ["Objectif atteint", "Goal reached"], "حذف هذا الهدف؟": ["Supprimer cet objectif ?", "Delete this goal?"], "بلغت هدفك!": ["Objectif atteint !", "Goal reached!"]});Object.assign(D,{"قارن مع شهر": ["Comparer avec un mois", "Compare with a month"], "اختر شهراً لمقارنته بالفترة الحالية.": ["Choisissez un mois à comparer avec la période en cours.", "Pick a month to compare with the current period."], "الفترة الحالية": ["Période actuelle", "Current period"], "أرشفة الفترة السابقة تلقائياً عند بداية فترة جديدة": ["Archiver automatiquement la période précédente au début d’une nouvelle période", "Automatically archive the previous period when a new one starts"], "تُخفى مصاريف الفترات السابقة من السجل وتبقى في الإحصائيات والميزانية.": ["Les dépenses des périodes précédentes sont masquées de l’historique mais restent dans les statistiques et le budget.", "Previous periods' expenses are hidden from the log but stay in statistics and budget."]});PAT.push([new RegExp("^يلزم (.+) شهرياً$"),["Il faut $1 par mois","Need $1 per month"]]);
 Object.assign(D,{"المزيد": ["Plus", "More"], "اليوم": ["Aujourd’hui", "Today"], "أمس": ["Hier", "Yesterday"]});
 Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["Navigateur non compatible hors ligne", "Browser does not support offline mode"], "يلزم فتح التطبيق عبر https": ["L’application doit être ouverte en https", "The app must be opened over https"], "جاهز للعمل دون اتصال": ["Prêt pour le mode hors ligne", "Ready to work offline"], "لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل": ["Préparation incomplète : rouvrez l’application en ligne", "Setup incomplete: reopen the app while online"], "تعذّر فحص التخزين المؤقت": ["Impossible de vérifier le cache", "Could not check the cache"]});
 function T1(c){let L=LANG==='fr'?0:1,d=D[c];if(d)return d[L];if(c.includes(' · '))return c.split(' · ').map(x=>T(x)).join(' · ');for(const[re,v]of PAT)if(re.test(c))return c.replace(re,v[L]);let m=/^([^\p{L}\p{N}\s]+\s*)([\s\S]+)$/u.exec(c);if(m){let r=T1(m[2]);if(r!==m[2])return m[1]+r}return c}
@@ -718,7 +722,7 @@ function bind(){
   let xl=document.querySelector('#xls');if(xl)xl.onclick=exportXls;
   let cs=document.querySelector('#csv');if(cs)cs.onclick=exportCsv;
   let th=document.querySelector('#theme');if(th)th.onchange=()=>{cfg.theme=th.value;save();render()};
-  let sm=document.querySelector('#sm');if(sm)sm.onchange=()=>{statMonth=sm.value||'';render()};
+  let cm=document.querySelector('#cm');if(cm)cm.onchange=()=>{cmpMonth=cm.value||'';render()};
   let cg=document.querySelector('#cfgf');if(cg)cg.onsubmit=e=>{e.preventDefault();let f=new FormData(cg);cfg.salary=Math.max(0,round(f.get('salary')));cfg.budget=Math.max(0,round(f.get('budget')));cfg.startDay=Math.min(31,Math.max(1,Math.round(Number(f.get('startDay'))||1)));cfg.warn=Math.min(100,Math.max(1,Math.round(Number(f.get('warn'))||80)));cfg.rolloverBudget = f.get('rollover') === 'on';cfg.allowNeg = f.get('allowNeg') === 'on';save();render();msg('تم الحفظ')};
   let ar=document.querySelector('#arf');if(ar)ar.onsubmit=e=>{e.preventDefault();let m=Math.max(1,Number(new FormData(ar).get('months'))||6),d=new Date();d.setMonth(d.getMonth()-m);let cut=localISO(d),n=0;expenses.forEach(x=>{if(!x.archived&&x.date<cut){x.archived=true;n++}});cfg.months=m;save();render();msg(n?'تمت أرشفة '+n+' مصروف':'لا توجد مصاريف أقدم')};
   let aa=document.querySelector('#autoarch');if(aa)aa.onchange=()=>{cfg.autoArchive=aa.checked;let n=aa.checked?autoArch():0;save();render();msg(n?'تمت أرشفة '+n+' مصروف':'تم الحفظ')};
