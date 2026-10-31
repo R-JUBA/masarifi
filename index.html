@@ -8,15 +8,9 @@
 <title>مصاريفي</title>
 <style>
 :root {
-  --bg: #f1f5f9;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --line: #cbd5e1;
-  --danger: #ef4444;
-  --green: #10b981;
+  --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --muted: #64748b;
+  --primary: #4f46e5; --primary-hover: #4338ca; --line: #cbd5e1;
+  --danger: #ef4444; --green: #10b981;
   --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
   --radius: 16px;
 }
@@ -35,7 +29,6 @@ button {
 button:active { transform: scale(0.97); }
 .wrap { max-width: 680px; margin: auto; padding: 16px; }
 
-/* Top Bar & Hero */
 .hero {
   background: linear-gradient(135deg, #3730a3, #4f46e5);
   color: white; padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
@@ -116,23 +109,31 @@ h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-i
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .modal-header h2 { margin: 0; }
 .close-modal { background: none; color: var(--text); font-size: 24px; padding: 0; }
-.drag-list { overflow-y: auto; flex: 1; padding-bottom: 10px; }
+.drag-list { overflow-y: auto; flex: 1; padding-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
 
 .drag-item {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 12px; margin-bottom: 8px;
+  border-radius: 12px; margin: 0;
   user-select: none; -webkit-user-select: none;
   transition: background-color 0.2s;
+  touch-action: pan-y; /* يسمح بالتمرير الطبيعي قبل السحب */
 }
 .drag-item:active { background-color: #f8fafc; }
 body.dark .drag-item:active { background-color: #0f172a; }
 
 .drag-item.dragging { 
-  opacity: 0.9; box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
-  z-index: 1001; background-color: var(--card); border-color: var(--primary);
-  cursor: grabbing;
+  opacity: 0.95; box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+  z-index: 9999; background-color: var(--card); border-color: var(--primary);
+  cursor: grabbing; transform: scale(1.02); transition: none;
+  pointer-events: none; /* يمنع اعتراض المؤشر */
 }
+.drag-placeholder {
+  border: 2px dashed var(--primary); background: rgba(79, 70, 229, 0.05);
+  border-radius: 12px; margin: 0; flex-shrink: 0;
+}
+body.dark .drag-placeholder { background: rgba(79, 70, 229, 0.15); }
+
 .drag-item .cat-name { font-weight: 600; display: flex; align-items: center; gap: 8px; pointer-events: none;}
 .drag-item .cat-actions { display: flex; gap: 6px; }
 .drag-item .cat-actions button { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
@@ -219,7 +220,7 @@ body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255
 
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=31;
+const CURRENCY='د.ج'; const VER=33;
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -592,7 +593,8 @@ function bind(){
 }
 
 // --- Drag & Drop Logic for Categories ---
-let dragEl = null, dragPlaceholder = null, startY = 0, pressTimer = null;
+let dragEl = null, dragPlaceholder = null, startY = 0, startX = 0, pressTimer = null;
+let offsetX = 0, offsetY = 0;
 
 function openCatModal() {
   document.getElementById('catModal').classList.add('active');
@@ -679,17 +681,21 @@ function renderCatModalList() {
     item.addEventListener('pointerdown', e => {
       if(e.target.closest('button')) return;
       startY = e.clientY;
+      startX = e.clientX;
+      
+      // منع القائمة المنبثقة عند الضغط المطول
+      item.style.webkitTouchCallout = 'none';
       
       pressTimer = setTimeout(() => {
-        if (navigator.vibrate) navigator.vibrate(50);
-        startDrag(item, e.clientY);
+        startDrag(item, e);
       }, 400);
     });
     
     item.addEventListener('pointerup', cancelPress);
     item.addEventListener('pointercancel', cancelPress);
+    item.addEventListener('pointerleave', cancelPress);
     item.addEventListener('pointermove', e => {
-      if (pressTimer && Math.abs(e.clientY - startY) > 10) {
+      if (pressTimer && (Math.abs(e.clientY - startY) > 10 || Math.abs(e.clientX - startX) > 10)) {
         cancelPress();
       }
     });
@@ -703,59 +709,93 @@ function cancelPress() {
   }
 }
 
-function startDrag(item, clientY) {
+function startDrag(item, e) {
+  if (navigator.vibrate) navigator.vibrate(50);
+  
   dragEl = item;
-  startY = clientY;
+  const rect = item.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
   
+  // Create placeholder
   dragPlaceholder = document.createElement('div');
-  dragPlaceholder.style.height = `${item.offsetHeight}px`;
-  dragPlaceholder.style.margin = '8px 0';
-  dragPlaceholder.style.borderRadius = '12px';
-  dragPlaceholder.style.background = 'var(--line)';
-  dragPlaceholder.style.opacity = '0.5';
+  dragPlaceholder.className = 'drag-placeholder';
+  dragPlaceholder.style.height = `${rect.height}px`;
+  dragPlaceholder.style.width = `${rect.width}px`;
   
+  // Insert placeholder after the item
   item.after(dragPlaceholder);
-  item.classList.add('dragging');
-  item.style.pointerEvents = 'none';
-  item.style.position = 'relative';
-  item.style.touchAction = 'none';
   
-  document.addEventListener('pointermove', onPointerMove);
+  // Style the dragged item to float
+  item.classList.add('dragging');
+  item.style.position = 'fixed';
+  item.style.top = `${rect.top}px`;
+  item.style.left = `${rect.left}px`;
+  item.style.width = `${rect.width}px`;
+  item.style.height = `${rect.height}px`;
+  item.style.margin = '0';
+  item.style.zIndex = '9999';
+  item.style.pointerEvents = 'none'; // Crucial for elementsFromPoint
+  
+  document.addEventListener('pointermove', onPointerMove, { passive: false });
   document.addEventListener('pointerup', onPointerUp);
 }
 
 function onPointerMove(e) {
-  if(!dragEl) return;
-  e.preventDefault(); // Stop scrolling
-  const dy = e.clientY - startY;
-  dragEl.style.transform = `translateY(${dy}px)`;
+  if (!dragEl) return;
+  e.preventDefault(); // Prevent scrolling
   
+  dragEl.style.top = `${e.clientY - offsetY}px`;
+  dragEl.style.left = `${e.clientX - offsetX}px`;
+  
+  // Check which element is under the cursor
   const elements = document.elementsFromPoint(e.clientX, e.clientY);
   const target = elements.find(el => el.classList.contains('drag-item') && el !== dragEl && el.tagName !== 'FORM');
   
-  if(target) {
+  if (target) {
     const targetRect = target.getBoundingClientRect();
-    const dragRect = dragEl.getBoundingClientRect();
     const targetMid = targetRect.top + targetRect.height / 2;
-    const dragMid = dragRect.top + dragRect.height / 2;
     
-    if(dragMid < targetMid) {
+    if (e.clientY < targetMid) {
       target.before(dragPlaceholder);
     } else {
       target.after(dragPlaceholder);
+    }
+  } else {
+    // Check if we are hovering over the drag-list itself
+    const list = document.getElementById('dragList');
+    const listRect = list.getBoundingClientRect();
+    if (e.clientY > listRect.top && e.clientY < listRect.bottom) {
+       if (list.lastElementChild !== dragPlaceholder && e.clientY > (listRect.top + listRect.height / 2)) {
+           list.append(dragPlaceholder);
+       }
     }
   }
 }
 
 function onPointerUp(e) {
-  if(!dragEl) return;
-  dragEl.style.cssText = '';
+  if (!dragEl) return;
+  
+  // Reset styles
+  dragEl.style.position = '';
+  dragEl.style.top = '';
+  dragEl.style.left = '';
+  dragEl.style.width = '';
+  dragEl.style.height = '';
+  dragEl.style.margin = '';
+  dragEl.style.zIndex = '';
+  dragEl.style.pointerEvents = '';
   dragEl.classList.remove('dragging');
-  dragPlaceholder.before(dragEl);
-  dragPlaceholder.remove();
+  
+  // Place in final position
+  if (dragPlaceholder.parentNode) {
+    dragPlaceholder.before(dragEl);
+    dragPlaceholder.remove();
+  }
   
   dragEl = null;
   dragPlaceholder = null;
+  
   document.removeEventListener('pointermove', onPointerMove);
   document.removeEventListener('pointerup', onPointerUp);
   
