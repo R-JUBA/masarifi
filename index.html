@@ -823,3 +823,321 @@ function renderCatModalList() {
         <div class="cat-name">
           <span class="drag-handle" title="اسحب للترتيب">☰</span>
           <span>${esc(m.emoji +
+          <span>${esc(m.emoji + ' ' + m.name)}</span>
+          ${m.limit > 0 ? `<span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(m.limit)})</span>` : ''}
+        </div>
+        <div class="cat-actions">
+          <button type="button" class="secondary edit-cat-btn" data-id="${esc(m.id)}">تعديل</button>
+          <button type="button" class="danger del-cat-btn" data-id="${esc(m.id)}">حذف</button>
+        </div>
+      </div>`;
+    }
+    
+    subs.forEach(s => {
+      if (s.id === editCat) {
+        html += `<form class="ecf drag-item sub-cat-item" data-id="${esc(s.id)}" style="flex-direction:column; align-items:stretch; cursor:default;">
+          <div class="field"><label>الاسم</label><input name="name" value="${esc(s.name)}" required maxlength="40"></div>
+          <div class="grid"><div class="field"><label>إيموجي</label><input name="emoji" value="${esc(s.emoji)}" required maxlength="8"></div><div class="field"><label>اللون</label><input name="color" type="color" value="${esc(s.color||'#4f46e5')}" style="height:44px; padding:4px;"></div></div>
+          ${buildParentSelectHTML(s)}
+          <div class="field"><label>سقف شهري (0 = بدون)</label><input name="limit" type="number" min="0" step=".01" value="${s.limit||0}"></div>
+          <div class="row" style="display:flex; gap:8px;"><button style="flex:1; padding:8px;">حفظ</button><button type="button" class="secondary cancel-edit-cat" style="flex:1; padding:8px;">إلغاء</button></div>
+        </form>`;
+      } else {
+        html += `<div class="drag-item sub-cat-item" data-id="${esc(s.id)}" data-parent="${esc(m.id)}">
+          <div class="cat-name">
+            <span class="drag-handle" title="اسحب للترتيب">☰</span>
+            <span>↳ ${esc(s.emoji + ' ' + s.name)}</span>
+            ${s.limit > 0 ? `<span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(s.limit)})</span>` : ''}
+          </div>
+          <div class="cat-actions">
+            <button type="button" class="secondary edit-cat-btn" data-id="${esc(s.id)}">تعديل</button>
+            <button type="button" class="danger del-cat-btn" data-id="${esc(s.id)}">حذف</button>
+          </div>
+        </div>`;
+      }
+    });
+  });
+
+  list.innerHTML = html;
+  bindCatModal();
+  ico(list);
+  tr(list);
+}
+
+function bindCatModal() {
+  const list = document.getElementById('dragList');
+
+  // نموذج إضافة فئة
+  let cf = document.querySelector('#cf');
+  if (cf) {
+    cf.onsubmit = e => {
+      e.preventDefault();
+      let f = new FormData(cf), n = f.get('name').trim();
+      if (!n) return msg('أدخل اسماً');
+      cats.push({
+        id: id(), name: n, emoji: f.get('emoji').trim() || '✨',
+        color: f.get('color'), limit: Math.max(0, round(f.get('limit'))),
+        parent: f.get('parent') || null
+      });
+      save(); renderCatModalList(); cf.reset(); toggleAddCatForm(false); msg('تمت إضافة الفئة');
+    };
+  }
+
+  // أزرار التعديل والحذف
+  list.querySelectorAll('.edit-cat-btn').forEach(b => b.onclick = e => {
+    e.stopPropagation(); editCat = b.dataset.id; renderCatModalList();
+  });
+  list.querySelectorAll('.cancel-edit-cat').forEach(b => b.onclick = e => {
+    e.stopPropagation(); editCat = null; renderCatModalList();
+  });
+  list.querySelectorAll('.del-cat-btn').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    if (cats.length <= 1) return msg('يجب إبقاء فئة واحدة على الأقل');
+    let c = cats.find(x => x.id === b.dataset.id);
+    if (!c || !confirm('حذف فئة «' + c.name + '»؟ ستظهر مصاريفها السابقة كغير مصنفة.')) return;
+    cats.filter(x => x.parent === c.id).forEach(x => x.parent = null);
+    cats = cats.filter(x => x.id !== c.id);
+    save(); renderCatModalList(); render();
+  });
+  list.querySelectorAll('.ecf').forEach(fm => fm.onsubmit = e => {
+    e.preventDefault();
+    let f = new FormData(fm), c = cats.find(x => x.id === fm.dataset.id), n = f.get('name').trim();
+    if (!c) return;
+    if (!n) return msg('أدخل اسماً');
+    let newParent = f.get('parent') || null;
+    if (newParent) cats.filter(x => x.parent === c.id).forEach(x => x.parent = null);
+    c.name = n; c.emoji = f.get('emoji').trim() || '✨';
+    c.color = f.get('color'); c.limit = Math.max(0, round(f.get('limit')));
+    c.parent = newParent;
+    editCat = null; save(); renderCatModalList(); render(); msg('تم تعديل الفئة');
+  });
+
+  // تفعيل السحب
+  list.onpointerdown = handlePointerDown;
+  list.oncontextmenu = e => { if (isDragging || pressTimer) e.preventDefault(); };
+}
+
+function handlePointerDown(e) {
+  if (e.button && e.button !== 0) return;
+  const item = e.target.closest('.drag-item');
+  if (!item || item.tagName === 'FORM' || e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+
+  const isHandle = !!e.target.closest('.drag-handle');
+  startX = e.clientX;
+  startY = e.clientY;
+  currentPointerY = e.clientY;
+
+  const pointerId = e.pointerId;
+
+  // إذا ضغط على أيقونة المقبض ☰ يبدأ السحب فوراً، وإلا ينتظر ضغطة مطولة 300ms
+  const delay = isHandle ? 40 : 300;
+
+  pressTimer = setTimeout(() => {
+    pressTimer = null;
+    startDrag(item, e, pointerId);
+  }, delay);
+
+  const checkMoveBeforeStart = ev => {
+    if (!pressTimer) return;
+    if (Math.abs(ev.clientX - startX) > 10 || Math.abs(ev.clientY - startY) > 10) {
+      clearPendingPress();
+    }
+  };
+
+  const clearPendingPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+    document.removeEventListener('pointermove', checkMoveBeforeStart);
+    document.removeEventListener('pointerup', clearPendingPress);
+    document.removeEventListener('pointercancel', clearPendingPress);
+  };
+
+  document.addEventListener('pointermove', checkMoveBeforeStart);
+  document.addEventListener('pointerup', clearPendingPress, { once: true });
+  document.addEventListener('pointercancel', clearPendingPress, { once: true });
+}
+
+// منع تمرير الشاشة باللمس أثناء السحب النشط
+document.addEventListener('touchmove', e => {
+  if (isDragging) e.preventDefault();
+}, { passive: false });
+
+function startDrag(item, e, pointerId) {
+  if (navigator.vibrate) navigator.vibrate(40);
+  isDragging = true;
+  dragItem = item;
+  item.classList.add('dragging-ready');
+
+  try { item.setPointerCapture(pointerId); } catch (_) {}
+
+  const list = document.getElementById('dragList');
+  const rect = item.getBoundingClientRect();
+
+  // إذا كانت الفئة المسحوبة رئيسية ولها فئات فرعية، نخفي فئاتها الفرعية مؤقتاً لتنتقل معها
+  hiddenSubItems = [];
+  if (item.dataset.isMain === '1') {
+    const mainId = item.dataset.id;
+    list.querySelectorAll(`.sub-cat-item[data-parent="${CSS.escape(mainId)}"]`).forEach(sub => {
+      sub.style.display = 'none';
+      hiddenSubItems.push(sub);
+    });
+  }
+
+  // 1. إنشاء العنصر الوهمي (Placeholder) مكان البطاقة
+  dragPlaceholder = document.createElement('div');
+  dragPlaceholder.className = 'drag-placeholder';
+  dragPlaceholder.style.height = `${rect.height}px`;
+  dragPlaceholder.style.width = `${rect.width}px`;
+
+  item.parentNode.insertBefore(dragPlaceholder, item);
+  item.style.display = 'none';
+
+  // 2. إنشاء الأيقونة العائمة (Floating Clone)
+  dragClone = item.cloneNode(true);
+  dragClone.classList.add('drag-clone');
+  dragClone.style.display = 'flex';
+  dragClone.style.top = `${rect.top}px`;
+  dragClone.style.left = `${rect.left}px`;
+  dragClone.style.width = `${rect.width}px`;
+  dragClone.style.height = `${rect.height}px`;
+  document.body.appendChild(dragClone);
+
+  dragClone.offsetY = startY - rect.top;
+  dragClone.offsetX = startX - rect.left;
+
+  document.addEventListener('pointermove', onDragMove);
+  document.addEventListener('pointerup', onDragEnd);
+  document.addEventListener('pointercancel', onDragEnd);
+
+  startAutoScroll();
+}
+
+function onDragMove(e) {
+  if (!isDragging || !dragClone) return;
+  currentPointerY = e.clientY;
+
+  // تحريك الأيقونة العائمة مع المؤشر
+  dragClone.style.top = `${e.clientY - dragClone.offsetY}px`;
+  dragClone.style.left = `${e.clientX - dragClone.offsetX}px`;
+
+  updatePlaceholderPosition(e.clientX, e.clientY);
+}
+
+function updatePlaceholderPosition(clientX, clientY) {
+  const list = document.getElementById('dragList');
+  const listRect = list.getBoundingClientRect();
+
+  // حصر نقطة الفحص داخل حدود القائمة
+  const clampedX = Math.max(listRect.left + 20, Math.min(clientX, listRect.right - 20));
+  const el = document.elementFromPoint(clampedX, clientY);
+  const targetItem = el ? el.closest('.drag-item') : null;
+
+  if (targetItem && targetItem !== dragItem && targetItem.tagName !== 'FORM' && targetItem.style.display !== 'none') {
+    const targetRect = targetItem.getBoundingClientRect();
+    const targetMid = targetRect.top + targetRect.height / 2;
+
+    if (clientY < targetMid) {
+      list.insertBefore(dragPlaceholder, targetItem);
+    } else {
+      list.insertBefore(dragPlaceholder, targetItem.nextSibling);
+    }
+  }
+}
+
+function startAutoScroll() {
+  const list = document.getElementById('dragList');
+  const step = () => {
+    if (!isDragging) return;
+    const rect = list.getBoundingClientRect();
+    const threshold = 45;
+    const maxSpeed = 8;
+
+    if (currentPointerY < rect.top + threshold) {
+      list.scrollTop -= maxSpeed;
+    } else if (currentPointerY > rect.bottom - threshold) {
+      list.scrollTop += maxSpeed;
+    }
+    autoScrollRAF = requestAnimationFrame(step);
+  };
+  autoScrollRAF = requestAnimationFrame(step);
+}
+
+function onDragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  if (autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
+
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragEnd);
+  document.removeEventListener('pointercancel', onDragEnd);
+
+  if (dragClone) {
+    dragClone.remove();
+    dragClone = null;
+  }
+
+  if (dragItem && dragPlaceholder && dragPlaceholder.parentNode) {
+    dragItem.style.display = '';
+    dragItem.classList.remove('dragging-ready');
+    dragPlaceholder.parentNode.insertBefore(dragItem, dragPlaceholder);
+
+    // إعادة إظهار الفئات الفرعية وإدراجها مباشرة تحت فئتها الأم
+    let refNode = dragItem.nextSibling;
+    hiddenSubItems.forEach(sub => {
+      sub.style.display = '';
+      dragItem.parentNode.insertBefore(sub, refNode);
+    });
+    hiddenSubItems = [];
+
+    dragPlaceholder.remove();
+  }
+
+  dragItem = null;
+  dragPlaceholder = null;
+
+  saveNewCatOrder();
+}
+
+function cancelActiveDrag() {
+  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  if (isDragging) onDragEnd();
+}
+
+function saveNewCatOrder() {
+  const list = document.getElementById('dragList');
+  const elements = Array.from(list.querySelectorAll('.drag-item'));
+  const newCats = [];
+  let currentMainId = null;
+
+  elements.forEach(el => {
+    const c = cats.find(x => x.id === el.dataset.id);
+    if (!c) return;
+    if (!c.parent) {
+      currentMainId = c.id;
+    } else {
+      // إذا سُحبت فئة فرعية تحت فئة رئيسية جديدة، تتحدث فئتها الأم تلقائياً
+      c.parent = currentMainId;
+    }
+    newCats.push(c);
+  });
+
+  if (newCats.length === cats.length) {
+    cats = newCats;
+    save();
+    renderCatModalList();
+  }
+}
+
+// Initial render
+applyRecurring(); // تشغيل المصاريف المتكررة عند فتح التطبيق
+if(cfg.pw)lockNow();
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cfg.pw&&cfg.autoLock!==false)lockNow()});
+render();
+if('serviceWorker'in navigator){
+  let had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;location.reload()}});
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))
+}
+</script></body></html>
