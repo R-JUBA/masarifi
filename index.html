@@ -7,186 +7,84 @@
 <link rel="manifest" href="manifest.json">
 <title>مصاريفي</title>
 <style>
-:root {
-  --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --muted: #64748b;
-  --primary: #4f46e5; --primary-hover: #4338ca; --line: #cbd5e1;
-  --danger: #ef4444; --green: #10b981;
-  --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-  --radius: 16px;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-button, input, select { font: inherit; outline: none; }
-button {
-  border: 0; border-radius: 12px; padding: 12px;
-  background: var(--primary); color: white; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
-}
-button:active { transform: scale(0.97); }
-.wrap { max-width: 680px; margin: auto; padding: 16px; }
-.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-
-.hero {
-  background: linear-gradient(135deg, #3730a3, #4f46e5);
-  color: white; padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
-  border-radius: 0 0 28px 28px; box-shadow: 0 4px 12px rgba(79,70,229,0.25);
-}
-.top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.top-nav h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.btn-nav {
-  background: rgba(255,255,255,0.2); color: white; padding: 8px 16px;
-  border-radius: 12px; font-size: 13px; font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);
-}
-.btn-nav:active { background: rgba(255,255,255,0.3); }
-.hero p { margin: 0 0 16px; font-size: 14px; opacity: 0.9; }
-
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.balance, .card { 
-  padding: 16px; border-radius: var(--radius); 
-  background: var(--card); box-shadow: var(--shadow); 
-  margin: 12px 0; border: 1px solid var(--line);
-}
-.balance { 
-  background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.2); color: white;
-  cursor: pointer; transition: transform 0.15s;
-}
-.balance:active { transform: scale(0.98); }
-.balance strong { display: block; font-size: 24px; margin-top: 4px; font-weight: 800; }
-
-.field { margin: 12px 0; }
-.field label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; font-weight: 600; }
-.field input, .field select {
-  width: 100%; padding: 12px; border: 1px solid var(--line);
-  border-radius: 12px; background: var(--bg); color: var(--text);
-  transition: border-color 0.2s;
-}
-.field input:focus, .field select:focus { border-color: var(--primary); background: var(--card); }
-
-h2 { font-size: 18px; margin: 0 0 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-.muted { font-size: 13px; color: var(--muted); }
-.green { color: var(--green); }
-.red { color: var(--danger); }
-.danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
-.danger:active { background: #fca5a5; color: white; }
-.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
-.empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 14px; }
-
-/* Search Bar */
-.search-bar { display: flex; gap: 8px; margin-bottom: 12px; }
-.search-bar input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); }
-.search-bar select { width: 120px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); }
-
-.expense-item {
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 14px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-}
-.expense-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.expense-title { font-weight: 700; font-size: 15px; }
-.expense-note { font-size: 13px; color: var(--muted); margin-top: 2px; }
-.expense-amount { font-weight: 800; font-size: 16px; color: var(--danger); direction: ltr; }
-.expense-bottom { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--line); padding-top: 10px; }
-.expense-meta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.expense-actions { display: flex; gap: 6px; }
-.expense-actions button { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
-
-.bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0; }
-.bar i { display: block; height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
-
-/* Modals & Drag and Drop */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center; z-index: 1000;
-  opacity: 0; pointer-events: none; transition: opacity 0.3s;
-}
-.modal-overlay.active { opacity: 1; pointer-events: auto; }
-.modal-content {
-  background: var(--bg); width: 90%; max-width: 500px; max-height: 85vh;
-  border-radius: 24px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.3s;
-}
-.modal-overlay.active .modal-content { transform: translateY(0); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.modal-header h2 { margin: 0; }
-.close-modal { background: none; color: var(--text); font-size: 24px; padding: 0; }
-.drag-list { overflow-y: auto; flex: 1; padding-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-
-.drag-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 14px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 12px; margin: 0;
-  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-  transition: background-color 0.2s, transform 0.15s;
-  touch-action: pan-y;
-}
-.drag-item:active { background-color: #f8fafc; }
-body.dark .drag-item:active { background-color: #0f172a; }
-.drag-item.dragging-ready { touch-action: none; }
-.drag-handle {
-  cursor: grab; padding: 4px 6px 4px 10px; color: var(--muted);
-  font-size: 18px; line-height: 1; touch-action: none;
-  display: inline-flex; align-items: center; pointer-events: auto;
-}
-.drag-handle:active { cursor: grabbing; color: var(--primary); }
-
-.drag-clone { 
-  position: fixed; margin: 0;
-  opacity: 0.96; box-shadow: 0 18px 35px rgba(15, 23, 42, 0.28); 
-  z-index: 9999; background-color: var(--card); border: 2px solid var(--primary);
-  border-radius: 14px; transform: scale(1.03); pointer-events: none;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-  direction: rtl;
-}
-body.dark .drag-clone { box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55); }
-
-.drag-placeholder {
-  border: 2px dashed var(--primary); background: rgba(79, 70, 229, 0.08);
-  border-radius: 12px; margin: 0; flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-body.dark .drag-placeholder { background: rgba(79, 70, 229, 0.2); }
-
-.drag-item .cat-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.drag-item .cat-actions { display: flex; gap: 6px; }
-.drag-item .cat-actions button { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
-.sub-cat-item { padding-right: 32px; background: var(--bg); }
-
-/* Dark Mode */
-body.dark {
-  --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8;
-  --line: #334155; --shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-}
-body.dark .hero { background: linear-gradient(135deg, #1e1b4b, #4338ca); }
-body.dark .field input, body.dark .field select, body.dark .search-bar input, body.dark .search-bar select { background: #0f172a; }
-body.dark .danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
-body.dark .secondary { background: #334155; color: white; border-color: #475569; }
-body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
-
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
-  background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px;
-  font-weight: 600; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1100; opacity: 0;
-}
-.toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-#pa { display: none; }
-@media print {
-  @page { margin: 12mm; }
-  body.printing { background: #fff !important; }
-  body.printing > *:not(#pa) { display: none !important; }
-  body.printing #pa { display: block; color: #000; background: #fff; }
-  #pa table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  #pa td, #pa th { border: 1px solid #999; padding: 6px; text-align: start; }
-}
-
-.i { width: 1.15em; height: 1.15em; vertical-align: -0.15em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; }
+:root{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--primary:#4f46e5;--primary-hover:#4338ca;--line:#cbd5e1;--danger:#ef4444;--green:#10b981;--shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -1px rgba(0,0,0,0.03);--radius:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;outline:none}
+button{border:0;border-radius:12px;padding:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;transition:all .2s}
+button:active{transform:scale(.97)}
+.wrap{max-width:680px;margin:auto;padding:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero{background:linear-gradient(135deg,#3730a3,#4f46e5);color:#fff;padding:calc(16px + env(safe-area-inset-top)) 16px 24px;border-radius:0 0 28px 28px;box-shadow:0 4px 12px rgba(79,70,229,.25)}
+.top-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.top-nav h1{margin:0;font-size:20px;font-weight:800}
+.btn-nav{background:rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px)}
+.btn-nav:active{background:rgba(255,255,255,.3)}
+.hero p{margin:0 0 16px;font-size:14px;opacity:.9}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.balance,.card{padding:16px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);margin:12px 0;border:1px solid var(--line)}
+.balance{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer;transition:transform .15s}
+.balance:active{transform:scale(.98)}
+.balance strong{display:block;font-size:24px;margin-top:4px;font-weight:800}
+.field{margin:12px 0}
+.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px;font-weight:600}
+.field input,.field select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--primary);background:var(--card)}
+h2{font-size:18px;margin:0 0 16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.muted{font-size:13px;color:var(--muted)}
+.green{color:var(--green)}
+.red{color:var(--danger)}
+.danger{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+.danger:active{background:#fca5a5;color:#fff}
+.secondary{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.empty{text-align:center;color:var(--muted);padding:24px 0;font-size:14px}
+.search-bar{display:flex;gap:8px;margin-bottom:12px}
+.search-bar input{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.search-bar select{width:120px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.expense-item{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.02)}
+.expense-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.expense-title{font-weight:700;font-size:15px}
+.expense-note{font-size:13px;color:var(--muted);margin-top:2px}
+.expense-amount{font-weight:800;font-size:16px;color:var(--danger);direction:ltr}
+.expense-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
+.expense-meta{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.expense-actions{display:flex;gap:6px}
+.expense-actions button{padding:6px 12px;font-size:12px;border-radius:8px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--primary);border-radius:4px;transition:width .3s}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.modal-content{background:var(--bg);width:90%;max-width:500px;max-height:85vh;border-radius:24px;padding:20px;box-shadow:0 10px 25px rgba(0,0,0,.2);display:flex;flex-direction:column;transform:translateY(20px);transition:transform .3s}
+.modal-overlay.active .modal-content{transform:translateY(0)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-header h2{margin:0}
+.close-modal{background:none;color:var(--text);font-size:24px;padding:0}
+.drag-list{overflow-y:auto;flex:1;padding-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.drag-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:background-color .2s,transform .15s;touch-action:pan-y}
+.drag-item:active{background-color:#f8fafc}
+body.dark .drag-item:active{background-color:#0f172a}
+.drag-item.dragging-ready{touch-action:none}
+.drag-handle{cursor:grab;padding:4px 6px 4px 10px;color:var(--muted);font-size:18px;line-height:1;touch-action:none;display:inline-flex;align-items:center;pointer-events:auto}
+.drag-handle:active{cursor:grabbing;color:var(--primary)}
+.drag-clone{position:fixed;margin:0;opacity:.96;box-shadow:0 18px 35px rgba(15,23,42,.28);z-index:9999;background-color:var(--card);border:2px solid var(--primary);border-radius:14px;transform:scale(1.03);pointer-events:none;transition:transform .1s ease,box-shadow .1s ease;direction:rtl}
+body.dark .drag-clone{box-shadow:0 18px 35px rgba(0,0,0,.55)}
+.drag-placeholder{border:2px dashed var(--primary);background:rgba(79,70,229,.08);border-radius:12px;margin:0;flex-shrink:0;transition:all .15s ease}
+body.dark .drag-placeholder{background:rgba(79,70,229,.2)}
+.drag-item .cat-name{font-weight:600;display:flex;align-items:center;gap:8px}
+.drag-item .cat-actions{display:flex;gap:6px}
+.drag-item .cat-actions button{padding:4px 10px;font-size:12px;border-radius:8px}
+.sub-cat-item{padding-right:32px;background:var(--bg)}
+body.dark{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--line:#334155;--shadow:0 4px 6px -1px rgba(0,0,0,0.2)}
+body.dark .hero{background:linear-gradient(135deg,#1e1b4b,#4338ca)}
+body.dark .field input,body.dark .field select,body.dark .search-bar input,body.dark .search-bar select{background:#0f172a}
+body.dark .danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)}
+body.dark .secondary{background:#334155;color:#fff;border-color:#475569}
+body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 10px 15px -3px rgba(0,0,0,.1);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1100;opacity:0}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+#pa{display:none}
+@media print{@page{margin:12mm}body.printing{background:#fff!important}body.printing>*:not(#pa){display:none!important}body.printing #pa{display:block;color:#000;background:#fff}#pa table{width:100%;border-collapse:collapse;margin:12px 0}#pa td,#pa th{border:1px solid #999;padding:6px;text-align:start}}
+.i{width:1.15em;height:1.15em;vertical-align:-.15em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block}
 </style>
 </head>
 <body>
@@ -209,7 +107,6 @@ body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255
   <section id="view"></section>
 </main>
 
-<!-- Floating Modal for Categories -->
 <div id="catModal" class="modal-overlay">
   <div class="modal-content">
     <div class="modal-header">
@@ -217,11 +114,8 @@ body.dark .balance { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255
       <button class="close-modal" onclick="closeCatModal()">✕</button>
     </div>
     <p class="muted" style="margin-top:0; margin-bottom:12px;">اسحب من أيقونة <b>☰</b> مباشرة، أو اضغط <b>مطولاً</b> على أي فئة وحركها للأعلى أو الأسفل لترتيبها.</p>
-    <div class="drag-list" id="dragList">
-      <!-- Categories will be injected here -->
-    </div>
+    <div class="drag-list" id="dragList"></div>
     <button onclick="toggleAddCatForm()" class="secondary" style="width:100%; margin-top:8px;">➕ إضافة فئة جديدة</button>
-    
     <div id="addCatWrapper" style="display:none; margin-top:16px; border-top:1px dashed var(--line); padding-top:16px; overflow-y:auto; max-height:45vh;">
       <form id="cf">
         <div class="field"><label>الاسم</label><input name="name" required maxlength="40"></div>
@@ -475,7 +369,6 @@ function statView(){
   let rows=Object.entries(by).map(([k,v])=>({c:cat(k),v})).sort((a,b)=>b.v-a.v),pm=prevMonth(smo()),pt=sum(expenses.filter(e=>mOf(e)===pm)),ch=pt>0?Math.round((tot-pt)/pt*100):null,
   badge=ch===null?(tot>0?'<span class="muted">جديد</span>':'<span class="muted">—</span>'):`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`;
   
-  // Prediction Logic
   const [y, m] = smo().split('-').map(Number);
   const isCurrentMonth = smo() === pKey(today());
   let daysPassed = isCurrentMonth ? new Date().getDate() : new Date(y, m, 0).getDate();
@@ -556,7 +449,6 @@ function expRow(e){
 function budgetHTML(){
   let mk=pKey(today()),ms=expenses.filter(e=>pKey(e.date)===mk),sp=round(ms.reduce((t,e)=>t+Number(e.amount),0));
   
-  // حساب ترحيل الميزانية
   let baseBudget = cfg.budget;
   let rolloverAmt = 0;
   if (cfg.rolloverBudget && baseBudget > 0) {
@@ -629,7 +521,7 @@ function exportCsv(){
   let k=smo(), pe=periodExp(k);
   let csv='\uFEFFالتاريخ,الفئة,المبلغ,الدفع,ملاحظة\n';
   pe.forEach(e=>{
-    let note = (e.note||'').replace(/"/g, '""'); // escape quotes
+    let note = (e.note||'').replace(/"/g, '""');
     csv+=`"${e.date}","${cat(e.category).name}",${e.amount},"${e.wallet==='cash'?'نقدية':'بنك'}","${note}"\n`;
   });
   dl('masarifi-'+k+'.csv','text/csv',csv); msg('تم تصدير ملف CSV');
@@ -702,7 +594,6 @@ function bind(){
   let ar=document.querySelector('#arf');if(ar)ar.onsubmit=e=>{e.preventDefault();let m=Math.max(1,Number(new FormData(ar).get('months'))||6),d=new Date();d.setMonth(d.getMonth()-m);let cut=localISO(d),n=0;expenses.forEach(x=>{if(!x.archived&&x.date<cut){x.archived=true;n++}});cfg.months=m;save();render();msg(n?'تمت أرشفة '+n+' مصروف':'لا توجد مصاريف أقدم')};
   let ua=document.querySelector('#unarch');if(ua)ua.onclick=()=>{expenses.forEach(x=>delete x.archived);save();render()};
   
-  // Search & Filter
   let se=document.querySelector('#searchExp'); if(se) se.oninput=()=>{searchQuery=se.value; render(); se.focus();};
   let fc=document.querySelector('#filterCat'); if(fc) fc.onchange=()=>{filterCat=fc.value; render();};
 
@@ -712,7 +603,6 @@ function bind(){
   let ef=document.querySelector('#ef');if(ef)ef.onsubmit=e=>{e.preventDefault();let f=new FormData(ef),a=round(f.get('amount')),w=f.get('wallet');if(a<=0)return msg('مبلغ غير صحيح');if(wallets[w]<a)return msg('الرصيد غير كاف');wallets[w]=round(wallets[w]-a);expenses.push({id:id(),amount:a,wallet:w,category:f.get('category'),date:f.get('date'),note:f.get('note').trim()});save();render();msg(limitNote(f.get('category'))||'تم تسجيل المصروف')};
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!confirm('حذف هذا المصروف؟'))return;let x=expenses.find(e=>e.id===b.dataset.del);if(!x)return;wallets[x.wallet]=round(wallets[x.wallet]+x.amount);expenses=expenses.filter(e=>e.id!==x.id);save();render()});
   
-  // Recurring Form
   let rf = document.querySelector('#rf');
   if(rf) rf.onsubmit = e => {
     e.preventDefault(); let f = new FormData(rf);
@@ -749,7 +639,7 @@ function bind(){
     wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};save();render();msg('تم الاستيراد')}catch{msg('ملف غير صالح')}}
 }
 
-// --- نظام السحب والإفلات المحسن للفئات (أيقونات عائمة) ---
+// --- Drag & Drop (User Fixed Version) ---
 let dragItem = null;
 let dragClone = null;
 let dragPlaceholder = null;
@@ -822,7 +712,6 @@ function renderCatModalList() {
       html += `<div class="drag-item" data-id="${esc(m.id)}" data-is-main="1">
         <div class="cat-name">
           <span class="drag-handle" title="اسحب للترتيب">☰</span>
-          <span>${esc(m.emoji +
           <span>${esc(m.emoji + ' ' + m.name)}</span>
           ${m.limit > 0 ? `<span class="muted" style="font-size:11px; font-weight:normal;">(سقف ${fmt(m.limit)})</span>` : ''}
         </div>
@@ -867,7 +756,6 @@ function renderCatModalList() {
 function bindCatModal() {
   const list = document.getElementById('dragList');
 
-  // نموذج إضافة فئة
   let cf = document.querySelector('#cf');
   if (cf) {
     cf.onsubmit = e => {
@@ -883,7 +771,6 @@ function bindCatModal() {
     };
   }
 
-  // أزرار التعديل والحذف
   list.querySelectorAll('.edit-cat-btn').forEach(b => b.onclick = e => {
     e.stopPropagation(); editCat = b.dataset.id; renderCatModalList();
   });
@@ -912,7 +799,6 @@ function bindCatModal() {
     editCat = null; save(); renderCatModalList(); render(); msg('تم تعديل الفئة');
   });
 
-  // تفعيل السحب
   list.onpointerdown = handlePointerDown;
   list.oncontextmenu = e => { if (isDragging || pressTimer) e.preventDefault(); };
 }
@@ -928,8 +814,6 @@ function handlePointerDown(e) {
   currentPointerY = e.clientY;
 
   const pointerId = e.pointerId;
-
-  // إذا ضغط على أيقونة المقبض ☰ يبدأ السحب فوراً، وإلا ينتظر ضغطة مطولة 300ms
   const delay = isHandle ? 40 : 300;
 
   pressTimer = setTimeout(() => {
@@ -959,7 +843,6 @@ function handlePointerDown(e) {
   document.addEventListener('pointercancel', clearPendingPress, { once: true });
 }
 
-// منع تمرير الشاشة باللمس أثناء السحب النشط
 document.addEventListener('touchmove', e => {
   if (isDragging) e.preventDefault();
 }, { passive: false });
@@ -975,7 +858,6 @@ function startDrag(item, e, pointerId) {
   const list = document.getElementById('dragList');
   const rect = item.getBoundingClientRect();
 
-  // إذا كانت الفئة المسحوبة رئيسية ولها فئات فرعية، نخفي فئاتها الفرعية مؤقتاً لتنتقل معها
   hiddenSubItems = [];
   if (item.dataset.isMain === '1') {
     const mainId = item.dataset.id;
@@ -985,7 +867,6 @@ function startDrag(item, e, pointerId) {
     });
   }
 
-  // 1. إنشاء العنصر الوهمي (Placeholder) مكان البطاقة
   dragPlaceholder = document.createElement('div');
   dragPlaceholder.className = 'drag-placeholder';
   dragPlaceholder.style.height = `${rect.height}px`;
@@ -994,7 +875,6 @@ function startDrag(item, e, pointerId) {
   item.parentNode.insertBefore(dragPlaceholder, item);
   item.style.display = 'none';
 
-  // 2. إنشاء الأيقونة العائمة (Floating Clone)
   dragClone = item.cloneNode(true);
   dragClone.classList.add('drag-clone');
   dragClone.style.display = 'flex';
@@ -1017,19 +897,14 @@ function startDrag(item, e, pointerId) {
 function onDragMove(e) {
   if (!isDragging || !dragClone) return;
   currentPointerY = e.clientY;
-
-  // تحريك الأيقونة العائمة مع المؤشر
   dragClone.style.top = `${e.clientY - dragClone.offsetY}px`;
   dragClone.style.left = `${e.clientX - dragClone.offsetX}px`;
-
   updatePlaceholderPosition(e.clientX, e.clientY);
 }
 
 function updatePlaceholderPosition(clientX, clientY) {
   const list = document.getElementById('dragList');
   const listRect = list.getBoundingClientRect();
-
-  // حصر نقطة الفحص داخل حدود القائمة
   const clampedX = Math.max(listRect.left + 20, Math.min(clientX, listRect.right - 20));
   const el = document.elementFromPoint(clampedX, clientY);
   const targetItem = el ? el.closest('.drag-item') : null;
@@ -1037,7 +912,6 @@ function updatePlaceholderPosition(clientX, clientY) {
   if (targetItem && targetItem !== dragItem && targetItem.tagName !== 'FORM' && targetItem.style.display !== 'none') {
     const targetRect = targetItem.getBoundingClientRect();
     const targetMid = targetRect.top + targetRect.height / 2;
-
     if (clientY < targetMid) {
       list.insertBefore(dragPlaceholder, targetItem);
     } else {
@@ -1073,30 +947,23 @@ function onDragEnd() {
   document.removeEventListener('pointerup', onDragEnd);
   document.removeEventListener('pointercancel', onDragEnd);
 
-  if (dragClone) {
-    dragClone.remove();
-    dragClone = null;
-  }
+  if (dragClone) { dragClone.remove(); dragClone = null; }
 
   if (dragItem && dragPlaceholder && dragPlaceholder.parentNode) {
     dragItem.style.display = '';
     dragItem.classList.remove('dragging-ready');
     dragPlaceholder.parentNode.insertBefore(dragItem, dragPlaceholder);
 
-    // إعادة إظهار الفئات الفرعية وإدراجها مباشرة تحت فئتها الأم
     let refNode = dragItem.nextSibling;
     hiddenSubItems.forEach(sub => {
       sub.style.display = '';
       dragItem.parentNode.insertBefore(sub, refNode);
     });
     hiddenSubItems = [];
-
     dragPlaceholder.remove();
   }
 
-  dragItem = null;
-  dragPlaceholder = null;
-
+  dragItem = null; dragPlaceholder = null;
   saveNewCatOrder();
 }
 
@@ -1117,7 +984,6 @@ function saveNewCatOrder() {
     if (!c.parent) {
       currentMainId = c.id;
     } else {
-      // إذا سُحبت فئة فرعية تحت فئة رئيسية جديدة، تتحدث فئتها الأم تلقائياً
       c.parent = currentMainId;
     }
     newCats.push(c);
@@ -1131,7 +997,7 @@ function saveNewCatOrder() {
 }
 
 // Initial render
-applyRecurring(); // تشغيل المصاريف المتكررة عند فتح التطبيق
+applyRecurring();
 if(cfg.pw)lockNow();
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&cfg.pw&&cfg.autoLock!==false)lockNow()});
 render();
