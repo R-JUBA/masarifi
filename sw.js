@@ -1,4 +1,4 @@
-const CACHE = 'masarifi-v55',
+const CACHE = 'masarifi-v57',
   FILES = ['./', './index.html', './manifest.json', './cairo.woff2', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e =>
