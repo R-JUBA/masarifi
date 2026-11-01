@@ -262,7 +262,12 @@ function applyRecurring(){
       r.lastApplied=ym;changed=true;
     }
   });
-  if(changed) save();
+  if(changed) {
+    save();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('📒 مصاريفي', { body: 'تم تسجيل مصاريف متكررة جديدة تلقائياً.' }); } catch(e) {}
+    }
+  }
 }
 
 function nav(t){ if(tab!==t){tab=t;try{history.pushState({tab:t},'')}catch{}} editCat=null;payDebt=null;editExp=null;render(true) }
@@ -306,7 +311,7 @@ function arMonth(ym){
   const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   return months[m-1] + ' ' + y;
 }
-
+  
 function settingsView(){
   const groups = [
     ['💰 المال', [['wallets','👛','المحافظ'],['debts','🤝','الديون'],['goals','🏆','أهداف الادخار'],['recurring','🔁','المصاريف المتكررة']]],
@@ -522,7 +527,6 @@ function statView(){
   let prediction = 0;
   if (isCurrentMonth && tot > 0) prediction = round(tot / daysPassed * totalDays);
 
-  // إحصائيات السنة
   const currentY = new Date().getFullYear();
   const yearExp = expenses.filter(e => String(e.date||'').startsWith(String(currentY)));
   const yearTotal = sum(yearExp);
@@ -741,8 +745,12 @@ function openExport(type){
   _expType = type;
   document.getElementById('expTitle').textContent = 'تصدير ' + type.toUpperCase();
   document.getElementById('expMonthLabel').textContent = arMonth(smo());
-  document.getElementById('expStart').value = pRange(smo()).split(' ← ')[1].split('-').reverse().join('-'); // approximation
-  document.getElementById('expEnd').value = today();
+  
+  const [st, en] = pBounds(smo());
+  const f = t => new Date(t).toISOString().slice(0,10);
+  document.getElementById('expStart').value = f(st);
+  document.getElementById('expEnd').value = f(en);
+  
   document.getElementById('expModal').classList.add('active');
 }
 
