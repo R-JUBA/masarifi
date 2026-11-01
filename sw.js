@@ -1,5 +1,4 @@
-// عند أي إصدار جديد: غيّر الرقم هنا وكذلك VER في index.html
-const CACHE = 'masarifi-v52',
+const CACHE = 'masarifi-v53',
   FILES = ['./', './index.html', './manifest.json', './cairo.woff2', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e =>
@@ -33,7 +32,6 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
 
   if (e.request.mode === 'navigate') {
-    // الشبكة أولاً مع مهلة 4 ثوانٍ ثم النسخة المخزنة (للشبكات الضعيفة)
     const net = fetch(e.request, { cache: 'no-cache' }).then(n => {
       const ct = n.headers.get('content-type') || '';
       if (!n.ok || !ct.includes('text/html')) return n;
