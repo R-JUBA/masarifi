@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>مصاريفي</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--text:#111827;--muted:#6b7280;--primary:#0f766e;--primary-hover:#115e59;--line:#e5e7eb;--danger:#e11d48;--green:#059669;--shadow:0 8px 24px -12px rgba(15,23,42,.18);--radius:20px}
@@ -196,7 +197,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=63; 
+const CURRENCY='د.ج'; const VER=65; 
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -305,6 +306,8 @@ function applyRecurring(){
   }
 }
 
+const _openSt={};
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('#view details.grp'))_openSt[tab+':'+Array.from(document.querySelectorAll('#view details.grp')).indexOf(d)]=d.open},true);
 function nav(t){ if(tab!==t){tab=t;try{history.pushState({tab:t},'')}catch{}} editCat=null;payDebt=null;editExp=null;editRec=null;editDebt=null;render(true) }
 function toggleNav(){ nav(tab==='expenses'?'settings':'expenses') }
 
@@ -324,6 +327,7 @@ function render(scrollTop=false){
   }
   
   document.querySelector('#view').innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView,recurring:()=>backBtn()+recurringHTML(),goals:()=>backBtn()+goalsHTML()})[tab]();
+  document.querySelectorAll('#view details.grp').forEach((d,i)=>{const k=tab+':'+i;if(k in _openSt)d.open=_openSt[k]});
   
   document.querySelectorAll('#bnav [data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===(['expenses','stats','wallets'].includes(tab)?tab:'settings')));
   
@@ -549,7 +553,7 @@ const incomeNow=()=>round(moves.filter(m=>m.type==='deposit'&&pKey(m.date)===pKe
 function movesHTML(){
   const W=w=>w==='cash'?T(cfg.wCash||'نقدية'):T(cfg.wBank||'بنك');
   const rows=moves.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,30).map(m=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div>`).join('');
-  return `<div class="card"><h2>سجل الحركات</h2>${rows||'<div class="empty">لا توجد حركات</div>'}</div>`;
+  return `<details class="card grp"><summary>سجل الحركات</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد حركات</div>'}</div></details>`;
 }
 
 function goalHint(g,left){const d=Math.round((ts(g.date)-ts(today()))/DAY);return d<=0?'':'يلزم '+fmt(left/Math.max(1,Math.ceil(d/30)))+' شهرياً'}
@@ -571,13 +575,13 @@ function goalsHTML(){
         </select>
       </div>
     </form></div>`}).join('');
-  return `<div class="card"><h2>🏆 هدف جديد</h2><form id="gf"><div class="field"><label>اسم الهدف</label><input name="name" required maxlength="60"></div><div class="grid"><div class="field"><label>المبلغ المستهدف</label><input name="target" type="number" min=".01" step=".01" required></div><div class="field"><label>التاريخ المستهدف (اختياري)</label><input name="date" type="date"></div></div><button style="width:100%">حفظ الهدف</button></form></div><div class="card"><h2>أهدافي</h2>${rows||'<div class="empty">لا توجد أهداف</div>'}</div>`;
+  return `<details class="card grp"><summary>🏆 هدف جديد</summary><div style="margin-top:14px"><form id="gf"><div class="field"><label>اسم الهدف</label><input name="name" required maxlength="60"></div><div class="grid"><div class="field"><label>المبلغ المستهدف</label><input name="target" type="number" min=".01" step=".01" required></div><div class="field"><label>التاريخ المستهدف (اختياري)</label><input name="date" type="date"></div></div><button style="width:100%">حفظ الهدف</button></form></div></details><details class="card grp"><summary>أهدافي</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد أهداف</div>'}</div></details>`;
 }
 
 function debtView(){
   let l=debts.filter(d=>d.type==='lend').reduce((s,d)=>s+rem(d),0),b=debts.filter(d=>d.type==='borrow').reduce((s,d)=>s+rem(d),0);
   return backBtn()+`<div class="grid"><div class="card green">لك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(l)}</strong></div><div class="card red">عليك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(b)}</strong></div></div>
-  <div class="card"><h2>إضافة دين</h2><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
+  <details class="card grp"><summary>إضافة دين</summary><div style="margin-top:14px"><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
   <div style="background:var(--bg); padding:10px; border-radius:12px; border:1px solid var(--line); margin-top:10px; margin-bottom:12px;">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:20px;height:20px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة حسب نوع الدين</span></label>
     <select name="wallet" style="margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text);">
@@ -585,8 +589,8 @@ function debtView(){
       <option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option>
     </select>
   </div>
-  <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div>
-  <div class="card"><h2>سجل الديون</h2>${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div>`;
+  <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div></details>
+  <details class="card grp"><summary>سجل الديون</summary><div style="margin-top:14px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
 }
 
 function recurringHTML(){
@@ -659,7 +663,7 @@ function trendHTML(){
   let d=Array(N).fill(0);
   expenses.forEach(e=>{if(!e.date||mOf(e)!==mk)return;let i=Math.round((ts(String(e.date).slice(0,10))-st)/DAY);if(i>=0&&i<N)d[i]+=Number(e.amount)});
   let a=0,c=d.map(v=>{a+=v;return round(a)});
-  let mx=Math.max(...c,1),u=Math.pow(10,Math.floor(Math.log10(mx))),nm=Math.ceil(mx/u)*u,W=320,H=170,L=42,Rr=20,T=12,B=26,X=i=>N>1?L+i*(W-L-Rr)/(N-1):L+(W-L-Rr)/2,Y=v=>T+(1-v/nm)*(H-T-B),pts=c.map((v,i)=>X(i)+','+Y(v)),
+  let mx=Math.max(...c,1),u=Math.pow(10,Math.floor(Math.log10(mx))),nm=Math.ceil(mx/u)*u,W=320,H=170,L=42,Rr=20,TP=12,B=26,X=i=>N>1?L+i*(W-L-Rr)/(N-1):L+(W-L-Rr)/2,Y=v=>TP+(1-v/nm)*(H-TP-B),pts=c.map((v,i)=>X(i)+','+Y(v)),
   grid=[0,1,2,3,4].map(k=>{let v=nm*k/4;return `<line x1="${L}" x2="${W-Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end" font-size="9" fill="var(--muted)">${round(v).toLocaleString(LOC[LANG])}</text>`}).join(''),
   step=Math.max(1,Math.ceil(N/6)),
   lb=c.map((v,i)=>{if(i%step)return'';let dt=new Date(st+i*DAY);return `<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${p2(dt.getUTCDate())}/${p2(dt.getUTCMonth()+1)}</text>`}).join('');
@@ -702,8 +706,7 @@ function statView(){
     </div>
   </div>
   
-  <div class="card">
-    <h2>💵 ملخص الفترة</h2>
+  <details class="card grp" open><summary>💵 ملخص الفترة</summary><div style="margin-top:14px">
     <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">
       <div style="background:var(--bg); padding:10px; border-radius:10px; text-align:center;">
         <div class="muted" style="font-size:11px;">الدخل</div>
@@ -719,24 +722,24 @@ function statView(){
       </div>
     </div>
     ${monthIncome === 0 ? '<div class="muted" style="font-size:11px; margin-top:8px; text-align:center;">لا يوجد دخل مسجل في هذه الفترة. أضف إيداعاً من المحافظ.</div>' : ''}
-  </div>
+  </div></details>
   
-  <div class="card"><h2>📅 إحصائيات سنة ${currentY}</h2>
+  <details class="card grp"><summary>📅 إحصائيات سنة ${currentY}</summary><div style="margin-top:14px">
     <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px;">
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">إجمالي السنة</div><b style="font-size:16px;">${fmt(yearTotal)}</b></div>
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">المتوسط اليومي</div><b style="font-size:16px;">${fmt(dailyAvg)}</b></div>
     </div>
     <div class="muted" style="font-size:12px; margin-top:10px; text-align:center;">بناءً على ${yearExp.length} عملية خلال ${daysPassedInYear} يوماً مضت.</div>
-  </div>
-  <div class="card"><h2>📊 توزيع المصاريف</h2>${tot>0?donutHTML(rows,tot):'<div class="empty">لا توجد مصاريف</div>'}</div>
-  <div class="card"><h2>🔮 توقعات نهاية الشهر</h2>
+  </div></details>
+  <details class="card grp"><summary>📊 توزيع المصاريف</summary><div style="margin-top:14px">${tot>0?donutHTML(rows,tot):'<div class="empty">لا توجد مصاريف</div>'}</div></details>
+  <details class="card grp"><summary>🔮 توقعات نهاية الشهر</summary><div style="margin-top:14px">
     <div class="row">
       <span class="muted">بمعدل صرفك الحالي، ستنهي الشهر بـ:</span>
       <b style="font-size:18px; color:var(--primary);">${prediction>0 ? fmt(prediction) : '—'}</b>
     </div>
-  </div>
-  <div class="card"><h2>📈 اتجاه الإنفاق</h2>${trendHTML()}</div>
-  <div class="card"><h2>⚖️ مقارنة شهرية</h2>
+  </div></details>
+  <details class="card grp"><summary>📈 اتجاه الإنفاق</summary><div style="margin-top:14px">${trendHTML()}</div></details>
+  <details class="card grp"><summary>⚖️ مقارنة شهرية</summary><div style="margin-top:14px">
     <div class="field"><label>قارن مع شهر</label><input id="cm" type="month" value="${esc(cmpMonth)}"></div>
     ${cmpMonth?`<div class="muted" style="margin-bottom:8px;">الفترة: ${arMonth(cmpMonth)} (${pRange(cmpMonth)})</div>
     <div class="grid">
@@ -744,7 +747,7 @@ function statView(){
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الفترة المعروضة</div><b style="font-size:16px;">${fmt(tot)}</b></div>
     </div>
     <div class="row" style="margin-top:12px;"><span class="muted">نسبة التغيّر</span>${badge}</div>`:'<div class="muted">اختر شهراً لمقارنته بالفترة الحالية.</div>'}
-  </div>`;
+  </div></details>`;
 }
 
 const visible = () => {
@@ -912,7 +915,7 @@ function exportPdf(all, range){
   let tb=(h,r)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(y=>`<td>${esc(y)}</td>`).join('')}</tr>`).join('')}</table>`;
   document.querySelectorAll('#pa').forEach(x=>x.remove());
   let pa=document.createElement('div');pa.id='pa';
-  pa.innerHTML=`<h1>📒 تقرير مصاريفي — ${title}</h1><p>${all?'':'الفترة: '+title+' ('+pRange(k)+')<br>'}المجموع: <b>${esc(fmt(sum(pe)))}</b></p><h2>حسب الفئة</h2>${tb(['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).emoji+' '+cat(c).name,fmt(v),cat(c).limit>0?fmt(cat(c).limit):'—']))}<h2>المصاريف</h2>${tb(['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.map(e=>[e.date,cat(e.category).name,fmt(e.amount),e.wallet==='cash'?'نقدية':'بنك',e.note||'']))}<h2>الديون</h2>${tb(['الشخص','النوع','المبلغ','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',fmt(d.amount),fmt(rem(d))]))}`;
+  pa.innerHTML=`<h1>📒 تقرير مصاريفي — ${title}</h1><p>${all?'':'الفترة: '+title+(range?'':' ('+pRange(k)+')')+'<br>'}المجموع: <b>${esc(fmt(sum(pe)))}</b></p><h2>حسب الفئة</h2>${tb(['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).emoji+' '+cat(c).name,fmt(v),cat(c).limit>0?fmt(cat(c).limit):'—']))}<h2>المصاريف</h2>${tb(['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.map(e=>[e.date,cat(e.category).name,fmt(e.amount),e.wallet==='cash'?'نقدية':'بنك',e.note||'']))}<h2>الديون</h2>${tb(['الشخص','النوع','المبلغ','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',fmt(d.amount),fmt(rem(d))]))}`;
   document.body.appendChild(pa); ico(pa); tr(pa); document.body.classList.add('printing');
   let finished=false, fbTimer;
   const done=()=>{if(finished)return;finished=true;pa.remove();document.body.classList.remove('printing');removeEventListener('afterprint',done);if(fbTimer)clearTimeout(fbTimer)};
@@ -971,7 +974,7 @@ async function emailBackup(){
   cfg.lastBackup = Date.now(); save();
   const subject = encodeURIComponent('نسخة احتياطية - مصاريفي ' + today());
   const body = encodeURIComponent('السلام عليكم،\n\nمرفق نسخة احتياطية من تطبيق مصاريفي بتاريخ ' + today() + '.\n\n⚠️ يرجى إرفاق الملف التالي قبل الإرسال (تم تنزيله على جهازك):\n' + fileName + '\n\n— ملخص البيانات —\n• عدد المصاريف: ' + expenses.length + '\n• عدد الديون: ' + debts.length + '\n• رصيد البنك: ' + fmt(wallets.account) + '\n• رصيد النقدية: ' + fmt(wallets.cash));
-  location.href = 'mailto:' + encodeURIComponent(to) + '?subject=' + subject + '&body=' + body;
+  location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
   msg('تم تنزيل الملف، يرجى إرفاقه بالبريد');
 }
     
@@ -979,7 +982,7 @@ const _enc=new TextEncoder(),_hx=b=>Array.from(new Uint8Array(b)).map(x=>x.toStr
 async function kdf(p,salt){let k=await crypto.subtle.importKey('raw',_enc.encode(p),'PBKDF2',false,['deriveBits']);return _hx(await crypto.subtle.deriveBits({name:'PBKDF2',salt:_enc.encode(salt),iterations:150000,hash:'SHA-256'},k,256))}
 async function newPw(p){let s=_hx(crypto.getRandomValues(new Uint8Array(16)));return{s,h:await kdf(p,s)}}
 async function checkPw(p){return!!cfg.pw&&(await kdf(String(p||''),cfg.pw.s))===cfg.pw.h}
-let fails=+localStorage.getItem('masarifi.fails')||0,until=+localStorage.getItem('masarifi.until')||0;
+let fails=0,until=0;try{fails=+localStorage.getItem('masarifi.fails')||0;until=+localStorage.getItem('masarifi.until')||0}catch{}
 let _lockReturnTab='expenses';
 function lockNow(){
   if(!cfg.pw||document.querySelector('#lock'))return;
@@ -1056,7 +1059,7 @@ function bind(){
   if(db) db.onclick = () => {
       if(!confirm('🚨 هل أنت متأكد من حذف جميع البيانات؟ لا يمكن التراجع عن هذه الخطوة!')) return;
       if(!confirm('تأكيد أخير: هل تريد حذف كل شيء والبدء من الصفر؟')) return;
-      localStorage.clear();
+      try{Object.keys(localStorage).filter(k=>k.startsWith('masarifi.')).forEach(k=>localStorage.removeItem(k))}catch{}
       location.reload();
   };
 
