@@ -197,7 +197,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=65; 
+const CURRENCY='د.ج'; const VER=67; 
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -488,7 +488,7 @@ function refreshExpList(){
 function walletView(){
   return backBtn()+`
   <details class="card grp">
-    <summary>✏️ ${esc(T('أسماء المحافظ'))}</summary>
+    <summary>🏷️ ${esc(T('أسماء المحافظ'))}</summary>
     <form id="wnf" style="margin-top:14px;">
       <div class="grid">
         <div class="field"><label>🏦 ${esc(T('اسم الحساب البنكي'))}</label><input name="wBank" value="${esc(cfg.wBank||'الحساب البنكي')}" required maxlength="20" placeholder="${esc(T('مثال: CIB'))}"></div>
@@ -498,15 +498,15 @@ function walletView(){
     </form>
   </details>
   <details class="card grp">
-    <summary>✏️ ${esc(T('تعديل الرصيد'))}</summary>
+    <summary>⚖️ ${esc(T('تعديل الرصيد'))}</summary>
     <form id="wf" style="margin-top:14px;"><div class="grid"><div class="field"><label>🏦 ${esc(T(cfg.wBank||'الحساب البنكي'))}</label><input name="account" type="number" step=".01" value="${wallets.account}" required></div><div class="field"><label>💵 ${esc(T(cfg.wCash||'النقدية'))}</label><input name="cash" type="number" step=".01" value="${wallets.cash}" required></div></div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
   </details>
   <details class="card grp">
-    <summary>${esc(T('إيداع'))}</summary>
+    <summary>📥 ${esc(T('إيداع'))}</summary>
     <form id="df" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>${esc(T('المحفظة'))}</label><select name="wallet"><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div></div><div class="grid"><div class="field"><label>${esc(T('المصدر'))}</label><select name="source"><option value="راتب">${esc(T('راتب'))}</option><option value="عمل إضافي">${esc(T('عمل إضافي'))}</option><option value="هدية">${esc(T('هدية'))}</option><option value="أخرى">${esc(T('أخرى'))}</option></select></div><div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div></div><button style="width:100%;">${esc(T('إيداع'))}</button></form>
   </details>
   <details class="card grp">
-    <summary>${esc(T('تحويل بين المحافظ'))}</summary>
+    <summary>🔄 ${esc(T('تحويل بين المحافظ'))}</summary>
     <form id="tf" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('من'))}</label><select name="from"><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option></select></div><div class="field"><label>${esc(T('إلى'))}</label><select name="to"><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div></div><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><button style="width:100%;">${esc(T('تحويل'))}</button></form>
   </details>`+movesHTML();
 }
@@ -553,7 +553,7 @@ const incomeNow=()=>round(moves.filter(m=>m.type==='deposit'&&pKey(m.date)===pKe
 function movesHTML(){
   const W=w=>w==='cash'?T(cfg.wCash||'نقدية'):T(cfg.wBank||'بنك');
   const rows=moves.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,30).map(m=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div>`).join('');
-  return `<details class="card grp"><summary>سجل الحركات</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد حركات</div>'}</div></details>`;
+  return `<details class="card grp"><summary>📜 سجل الحركات</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد حركات</div>'}</div></details>`;
 }
 
 function goalHint(g,left){const d=Math.round((ts(g.date)-ts(today()))/DAY);return d<=0?'':'يلزم '+fmt(left/Math.max(1,Math.ceil(d/30)))+' شهرياً'}
@@ -580,8 +580,8 @@ function goalsHTML(){
 
 function debtView(){
   let l=debts.filter(d=>d.type==='lend').reduce((s,d)=>s+rem(d),0),b=debts.filter(d=>d.type==='borrow').reduce((s,d)=>s+rem(d),0);
-  return backBtn()+`<div class="grid"><div class="card green">لك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(l)}</strong></div><div class="card red">عليك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(b)}</strong></div></div>
-  <details class="card grp"><summary>إضافة دين</summary><div style="margin-top:14px"><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
+  return backBtn()+`<details class="card grp" open><summary>📊 ملخص الديون</summary><div class="grid" style="margin-top:14px"><div class="card green" style="margin:0">لك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(l)}</strong></div><div class="card red" style="margin:0">عليك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(b)}</strong></div></div></details>
+  <details class="card grp"><summary>➕ إضافة دين</summary><div style="margin-top:14px"><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
   <div style="background:var(--bg); padding:10px; border-radius:12px; border:1px solid var(--line); margin-top:10px; margin-bottom:12px;">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:20px;height:20px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة حسب نوع الدين</span></label>
     <select name="wallet" style="margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text);">
@@ -590,7 +590,7 @@ function debtView(){
     </select>
   </div>
   <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div></details>
-  <details class="card grp"><summary>سجل الديون</summary><div style="margin-top:14px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
+  <details class="card grp"><summary>📜 سجل الديون</summary><div style="margin-top:14px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
 }
 
 function recurringHTML(){
@@ -622,8 +622,7 @@ function recurringHTML(){
   }).join('');
 
   return `
-    <div class="card">
-      <h2>🔁 إضافة مصروف متكرر</h2>
+    <details class="card grp"><summary>🔁 إضافة مصروف متكرر</summary><div style="margin-top:14px">
       <form id="rf">
         <div class="grid">
           <div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div>
@@ -636,11 +635,10 @@ function recurringHTML(){
         <div class="muted" style="font-size:12px;margin-top:6px">يُسجَّل بتاريخ هذا اليوم من كل شهر ميلادي، وتُعوَّض الأشهر الفائتة تلقائياً عند فتح التطبيق.</div>
         <button style="width:100%; margin-top:8px;">حفظ القالب</button>
       </form>
-    </div>
-    <div class="card">
-      <h2>القائمة المتكررة</h2>
+    </div></details>
+    <details class="card grp"><summary>📋 القائمة المتكررة</summary><div style="margin-top:14px">
       ${rows || '<div class="empty">لا توجد مصاريف متكررة.</div>'}
-    </div>
+    </div></details>
     <div class="card" style="margin-top:12px;">
       <button id="notifyBtn" class="secondary" style="width:100%;">🔔 تفعيل إشعارات المصاريف المتكررة</button>
       <div class="muted" style="margin-top:6px; font-size:11px; text-align:center;">سيعلمك التطبيق عند استحقاق أي مصروف متكرر (يتطلب إبقاء التطبيق مثبتاً).</div>
@@ -697,14 +695,14 @@ function statView(){
   const netBalance = round(monthIncome - tot);
 
   return backBtn()+`
-  <div class="card">
+  <details class="card grp" open><summary>📅 الفترة والتصدير</summary><div style="margin-top:14px">
     <div class="field"><label>اختر الفترة</label><input id="sm" type="month" value="${esc(smo())}"></div><div class="muted">الفترة: ${arMonth(smo())} (${pRange(smo())})</div>
     <div class="row" style="margin-top:16px; flex-wrap:wrap; gap:8px;">
       <button id="xpdf" style="flex:1;">📄 PDF</button>
       <button id="xls" class="secondary" style="flex:1;">📊 Excel</button>
       <button id="csv" class="secondary" style="flex:1;">📑 CSV</button>
     </div>
-  </div>
+  </div></details>
   
   <details class="card grp" open><summary>💵 ملخص الفترة</summary><div style="margin-top:14px">
     <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">
@@ -814,12 +812,12 @@ function budgetHTML(){
   let left = round(effBudget - sp);
   let pc = effBudget>0 ? Math.min(100,sp/effBudget*100) : 0;
 
-  return `<div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px;">
-    <div class="card" style="padding:12px; text-align:center;"><div class="muted">المصاريف</div><b>${fmt(sp)}</b></div>
-    <div class="card" style="padding:12px; text-align:center;"><div class="muted">المتبقي</div><b class="${left<0?'red':'green'}">${effBudget>0?fmt(left):'—'}</b></div>
-    <div class="card" style="padding:12px; text-align:center;"><div class="muted">العمليات</div><b>${ms.length}</b></div>
-  </div>
-  <div class="card"><h2>🎯 الميزانية الشهرية</h2><div class="muted" style="margin-bottom:12px;">الفترة الحالية: ${arMonth(mk)} (${pRange(mk)})</div>
+  return `<details class="card grp" open><summary>📊 ملخص الميزانية</summary><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+    <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">المصاريف</div><b>${fmt(sp)}</b></div>
+    <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">المتبقي</div><b class="${left<0?'red':'green'}">${effBudget>0?fmt(left):'—'}</b></div>
+    <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">العمليات</div><b>${ms.length}</b></div>
+  </div></details>
+  <details class="card grp" open><summary>🎯 الميزانية الشهرية</summary><div style="margin-top:14px"><div class="muted" style="margin-bottom:12px;">الفترة الحالية: ${arMonth(mk)} (${pRange(mk)})</div>
   <form id="cfgf"><div class="grid"><div class="field"><label>الراتب الشهري</label><input name="salary" type="number" min="0" step=".01" value="${cfg.salary}"></div><div class="field"><label>حد الإنفاق الأساسي</label><input name="budget" type="number" min="0" step=".01" value="${cfg.budget}"></div></div><div class="grid"><div class="field"><label>بداية الشهر (1–31)</label><input name="startDay" type="number" min="1" max="31" value="${cfg.startDay}"></div><div class="field"><label>تنبيه عند (%)</label><input name="warn" type="number" min="1" max="100" value="${cfg.warn}"></div></div>
   
   <div class="field"><label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 8px; padding: 10px; background: var(--card); border-radius: 12px; border: 1px solid var(--line);">
@@ -839,7 +837,7 @@ function budgetHTML(){
   ${rolloverAmt > 0 ? `<div class="muted" style="text-align:center; margin-top:8px; color:var(--green);">تم ترحيل <b>${fmt(rolloverAmt)}</b> من الشهر السابق.</div>` : ''}
   ${cfg.salary>0?`<div class="muted" style="text-align:center; margin-top:8px;">المتبقي من الراتب: ${fmt(cfg.salary-sp)}</div>`:''}
   ${incomeNow()>0?`<div class="muted" style="text-align:center; margin-top:8px;">دخل هذه الفترة: <b>${fmt(incomeNow())}</b> · الصافي: <b>${fmt(incomeNow()-sp)}</b></div>`:''}
-  </div>`+limitsHTML();
+  </div></details>`+limitsHTML();
 }
 
 function archHTML(){
@@ -878,7 +876,7 @@ function limitNote(id){
 }
 function limitsHTML(){
   let L=cats.filter(c=>c.limit>0);if(!L.length)return'';
-  return `<div class="card"><h2>🚧 سقف الفئات</h2>${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--primary)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div>`
+  return `<details class="card grp"><summary>🚧 سقف الفئات</summary><div style="margin-top:14px">${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--primary)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div></details>`
 }
   function securityView(){
   let has=!!cfg.pw;
