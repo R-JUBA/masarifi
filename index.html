@@ -197,7 +197,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
-const CURRENCY='د.ج'; const VER=67; 
+const CURRENCY='د.ج'; const VER=68; 
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -1013,6 +1013,7 @@ Object.assign(D,{"المزيد": ["Plus", "More"], "اليوم": ["Aujourd’hui
 Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["Navigateur non compatible hors ligne", "Browser does not support offline mode"], "يلزم فتح التطبيق عبر https": ["L’application doit être ouverte en https", "The app must be opened over https"], "جاهز للعمل دون اتصال": ["Prêt pour le mode hors ligne", "Ready to work offline"], "لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل": ["Préparation incomplète : rouvrez l’application en ligne", "Setup incomplete: reopen the app while online"], "تعذّر فحص التخزين المؤقت": ["Impossible de vérifier le cache", "Could not check the cache"]});
 Object.assign(D,{"اختر الفترة":["Choisir la période","Choose period"],"الفترة المعروضة":["Période affichée","Displayed period"],"يُسجَّل بتاريخ هذا اليوم من كل شهر ميلادي، وتُعوَّض الأشهر الفائتة تلقائياً عند فتح التطبيق.":["Enregistrée à cette date chaque mois civil ; les mois manqués sont rattrapés à l’ouverture de l’application.","Recorded on this day of each calendar month; missed months are caught up when the app opens."]});
 Object.assign(D,{"المال":["Argent","Money"],"التحليل والتخطيط":["Analyse et planification","Analysis & planning"]});
+Object.assign(D,{"الفترة والتصدير":["Période et export","Period & export"],"ملخص الديون":["Résumé des dettes","Debts summary"],"ملخص الميزانية":["Résumé du budget","Budget summary"],"إضافة مصروف متكرر":["Ajouter une dépense récurrente","Add recurring expense"]});
 Object.assign(D,{
   "تخطَّ الشهر الحالي وابدأ من الشهر القادم":["Ignorer le mois en cours et commencer le mois suivant","Skip current month, start next month"],
   "تغيير يوم بداية الشهر سيعيد تجميع الميزانية والفترات للمصاريف السابقة. متابعة؟":["Changer le jour de début du mois regroupera à nouveau le budget et les périodes des dépenses passées. Continuer ?","Changing the month start day will regroup the budget and periods for previous expenses. Continue?"]
