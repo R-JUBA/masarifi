@@ -272,7 +272,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 </script>
 <script type="text/plain" id="mainsrc">
 'use strict';
-const CURRENCY='د.ج'; const VER=69; 
+const CURRENCY='د.ج'; const VER=70; 
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
 const defaults=[['food','طعام','🍔','#f97316'],['transport','مواصلات','🚌','#3b82f6'],['bills','فواتير','🧾','#64748b'],['health','صحة','💊','#ef4444'],['education','تعليم','📚','#8b5cf6'],['fun','ترفيه','🎮','#ec4899'],['shopping','تسوق','🛍️','#14b8a6'],['other','أخرى','📦','#a3a3a3']].map(([id,name,emoji,color])=>({id,name,emoji,color,parent:null}));
 
@@ -576,7 +576,7 @@ function refreshExpList(){
 }
 
 function walletView(){
-  const ICONS=['👛','🏧','💰','🏠','📱','🎯','🚗','🎁'], full=wList().length>=WMAX;
+  const full=wList().length>=WMAX;
   return backBtn()+`
   <details class="card grp">
     <summary>🏷️ ${esc(T('أسماء المحافظ'))}</summary>
@@ -590,7 +590,6 @@ function walletView(){
     <form id="wxf" style="margin-top:14px;">
       ${full?`<div class="muted" style="margin-bottom:8px">${esc(T('الحد الأقصى 6 محافظ'))}</div>`:''}
       <div class="grid"><div class="field"><label>${esc(T('اسم المحفظة'))}</label><input name="name" required maxlength="20" placeholder="${esc(T('مثال: بريد الجزائر'))}"></div><div class="field"><label>${esc(T('الأيقونة'))}</label><input name="ico" maxlength="8" placeholder="👛" style="text-align:center;font-size:20px"></div></div>
-      <div class="row" style="flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px">${ICONS.map(i=>`<button type="button" class="secondary" style="padding:6px 10px;font-size:18px" data-pickico="${i}">${i}</button>`).join('')}</div>
       <button style="width:100%;"${full?' disabled':''}>${esc(T('إضافة محفظة'))}</button>
     </form>
   </details>
@@ -1239,7 +1238,6 @@ function bind(){
     offerUndo(limitNote(f.category)||budgetNote()||'تم تسجيل المصروف',()=>{expenses=expenses.filter(e=>e.id!==nid);wallets[w]=round(wallets[w]+a);save();render()});
   });
   document.querySelectorAll('[data-favdel]').forEach(b=>b.onclick=()=>{cfg.favs=cfg.favs.filter(x=>x.id!==b.dataset.favdel);save();render()});
-  document.querySelectorAll('[data-pickico]').forEach(b=>b.onclick=()=>{const i=b.closest('form').querySelector('[name=ico]');if(i)i.value=b.dataset.pickico});
   let wxf=document.querySelector('#wxf');
   if(wxf) wxf.onsubmit=e=>{
     e.preventDefault();
