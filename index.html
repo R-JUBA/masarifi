@@ -92,6 +92,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 @font-face{font-family:Cairo;src:url(cairo.woff2) format("woff2");font-weight:200 1000;font-display:swap}
 .hero p{margin:0 0 8px!important}
 .hero .balance{margin:4px 0 6px}
+.balance.sm{padding:8px 12px;margin:3px 0!important}.balance.sm strong{font-size:17px}
 .tile{background:var(--card);border:1px solid var(--line);color:var(--text);padding:18px 8px;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:var(--shadow)}
 .tile .ic{width:46px;height:46px;border-radius:15px;background:color-mix(in srgb,var(--primary) 13%,transparent);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px}
 .tile .ic .i{width:24px;height:24px}
@@ -119,10 +120,7 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
       <button id="navToggleBtn" class="btn-nav" onclick="toggleNav()">⚙️ الإعدادات</button>
     </div>
     <p>إدارة أموالك ومصاريفك بذكاء</p>
-    <div class="grid">
-      <div class="balance" data-go="wallets">🏦 <span id="lblBank">الحساب البنكي</span><strong id="bank">0</strong></div>
-      <div class="balance" data-go="wallets">💵 <span id="lblCash">النقدية / الجيب</span><strong id="cash">0</strong></div>
-    </div>
+    <div class="grid" id="hbal"></div>
   </div>
 </header>
 
@@ -196,6 +194,83 @@ body.dark .balance{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1)}
 
 <div class="toast" id="toast"></div>
 <script>
+/* مخزن احتياطي IndexedDB + تحميل التطبيق بعد قراءته */
+(function(){
+  var DBN='masarifi-db',ST='kv';
+  var KEYS=['masarifi.expenses.v8','masarifi.wallets.v8','masarifi.debts.v8','masarifi.cats.v2','masarifi.settings.v1','masarifi.recurring.v1','masarifi.moves.v1','masarifi.goals.v1'];
+  var I=window.__idb={db:null,err:'',lastOk:0,lastT:0,pending:null,busy:false,dead:false,frozen:false,restored:false};
+  window.__SNAP=null;window.__seq=0;
+  function lsSeq(){try{return +localStorage.getItem('masarifi.seq')||0}catch(e){return 0}}
+  function lsData(){var d={},n=0;try{KEYS.forEach(function(k){var v=localStorage.getItem(k);if(v!==null){d[k]=v;n++}})}catch(e){}return n?d:null}
+  function flush(){
+    if(I.busy||!I.pending||!I.db)return;
+    I.busy=true;var p=I.pending;I.pending=null;
+    try{
+      var tx=I.db.transaction(ST,'readwrite');
+      tx.objectStore(ST).put({seq:p.seq,t:Date.now(),data:p.data},'snap');
+      tx.oncomplete=function(){I.busy=false;I.lastOk=p.seq;I.lastT=Date.now();I.err='';flush()};
+      tx.onerror=tx.onabort=function(){if(!I.busy)return;I.busy=false;I.err=(tx.error&&tx.error.name)||'write';flush()};
+    }catch(e){I.busy=false;I.err='write'}
+  }
+  I.save=function(seq,data){
+    if(!I.db)return false;
+    if(I.frozen)return true;
+    I.pending={seq:seq,data:data};flush();return true;
+  };
+  I.clear=function(){
+    I.frozen=true;I.pending=null;
+    return new Promise(function(res,rej){
+      if(!I.db)return res();
+      try{
+        var tx=I.db.transaction(ST,'readwrite');
+        tx.objectStore(ST).clear();
+        tx.oncomplete=function(){res()};
+        tx.onerror=tx.onabort=function(){rej(tx.error||new Error('clear'))};
+      }catch(e){rej(e)}
+    });
+  };
+  var loadP=new Promise(function(resolve){
+    var done=false;function fin(){if(!done){done=true;resolve()}}
+    setTimeout(function(){if(!done){I.dead=true;I.err='timeout';fin()}},2500);
+    try{
+      if(!window.indexedDB){I.err='unsupported';return fin()}
+      var r=indexedDB.open(DBN,1);
+      r.onupgradeneeded=function(){try{r.result.createObjectStore(ST)}catch(e){}};
+      r.onerror=function(){I.err='open';fin()};
+      r.onblocked=function(){I.err='blocked'};
+      r.onsuccess=function(){
+        var db=r.result;
+        if(I.dead){try{db.close()}catch(e){}return}
+        db.onversionchange=function(){try{db.close()}catch(e){}I.db=null};
+        var g;
+        try{g=db.transaction(ST,'readonly').objectStore(ST).get('snap')}catch(e){I.err='read';fin();return}
+        g.onsuccess=function(){
+          if(I.dead){try{db.close()}catch(e){}return}
+          var snap=g.result,ls=lsSeq();
+          I.db=db;
+          if(snap&&snap.data&&snap.seq>ls){
+            window.__SNAP=snap.data;window.__seq=snap.seq;I.restored=true;I.lastOk=snap.seq;I.lastT=snap.t||0;
+          }else{
+            window.__seq=Math.max(ls,snap&&snap.seq||0);
+            var d=lsData();
+            if(d&&(!snap||snap.seq<ls)){window.__seq=Math.max(ls,1);I.save(window.__seq,d)}
+            else if(snap){I.lastOk=snap.seq;I.lastT=snap.t||0}
+          }
+          fin();
+        };
+        g.onerror=function(){I.err='read';fin()};
+      };
+    }catch(e){I.err='open';fin()}
+  });
+  var domP=new Promise(function(r){if(document.readyState!=='loading')r();else document.addEventListener('DOMContentLoaded',function(){r()})});
+  Promise.all([loadP,domP]).then(function(){
+    var sc=document.createElement('script');
+    sc.textContent=document.getElementById('mainsrc').textContent;
+    document.body.appendChild(sc);
+  });
+})();
+</script>
+<script type="text/plain" id="mainsrc">
 'use strict';
 const CURRENCY='د.ج'; const VER=69; 
 const K={e:'masarifi.expenses.v8', w:'masarifi.wallets.v8', d:'masarifi.debts.v8', c:'masarifi.customCats.v1', c2:'masarifi.cats.v2', s:'masarifi.settings.v1', r:'masarifi.recurring.v1', m:'masarifi.moves.v1', g:'masarifi.goals.v1'};
@@ -206,11 +281,27 @@ const safeCol=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#0f766e';
 const localISO=(d=new Date())=>{let x=new Date(d.getTime());x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const today=()=>localISO();
 
-function read(k,d){try{let x=localStorage.getItem(k);return x===null?d:JSON.parse(x)}catch{return d}}
+function read(k,d){try{let x=(window.__SNAP&&k in window.__SNAP)?window.__SNAP[k]:localStorage.getItem(k);return x===null||x===undefined?d:JSON.parse(x)}catch{return d}}
 let expenses=read(K.e,[]), wallets=read(K.w,{account:0,cash:0}), debts=read(K.d,[]), cats=read(K.c2,null), recurring=read(K.r,[]), moves=read(K.m,[]), goals=read(K.g,[]), tab='expenses', editCat=null, payDebt=null, statMonth='',cmpMonth='', editExp=null, editMove=null, searchQuery='', filterCat='all', cfg=Object.assign({salary:0,budget:0,months:6,startDay:1,warn:80,theme:'light',autoLock:true,lang:'ar',rolloverBudget:false,autoArchive:false,allowNeg:false,lastBackup:0,wBank:'الحساب البنكي',wCash:'النقدية / الجيب'},read(K.s,{}));
 let editRec=null, editDebt=null, undoAction=null, _undoTimer=null, filterWallet='all', filterDateFrom='', filterDateTo='';
 
-wallets={account:round(wallets.account)||0,cash:round(wallets.cash)||0};
+const WMAX=6;
+const firstG=v=>{v=String(v==null?'':v).trim();if(!v)return'';try{const it=new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(v)[Symbol.iterator]().next();return it.value?it.value.segment:''}catch(e){return Array.from(v)[0]||''}};
+const wList=()=>[{id:'account',name:cfg.wBank||'بنك',ico:firstG(cfg.wIcoB)||'🏦'},{id:'cash',name:cfg.wCash||'نقدية',ico:firstG(cfg.wIcoC)||'💵'}].concat((cfg.wx||[]).map(w=>({id:w.id,name:w.name,ico:firstG(w.ico)||'👛'})));
+const wOk=i=>typeof i==='string'&&Object.prototype.hasOwnProperty.call(wallets,i);
+const wName=i=>{const w=wList().find(x=>x.id===i);return w?T(w.name):T('محفظة محذوفة')};
+const wLbl=i=>{const w=wList().find(x=>x.id===i);return w?w.ico+' '+T(w.name):'👛 '+T('محفظة محذوفة')};
+const wOpts=sel=>wList().map(w=>`<option value="${esc(w.id)}"${w.id===sel?' selected':''}>${w.ico} ${esc(T(w.name))}</option>`).join('');
+const wUsed=i=>expenses.some(x=>x.wallet===i)||recurring.some(r=>r.wallet===i)||moves.some(m=>m.to===i||m.from===i)||debts.some(d=>(d.payments||[]).some(p=>p.wallet===i));
+function wNorm(){
+  cfg.wx=(Array.isArray(cfg.wx)?cfg.wx:[]).filter(w=>w&&typeof w.id==='string'&&w.id&&w.name).slice(0,WMAX-2).map(w=>({id:w.id,name:String(w.name).slice(0,20),ico:firstG(w.ico)||'👛'}));
+  cfg.wIcoB=firstG(cfg.wIcoB);cfg.wIcoC=firstG(cfg.wIcoC);
+  cfg.favs=(Array.isArray(cfg.favs)?cfg.favs:[]).filter(f=>f&&f.id&&Number(f.amount)>0&&typeof f.wallet==='string').slice(0,10).map(f=>({id:String(f.id),amount:round(f.amount),wallet:f.wallet,category:String(f.category||''),note:String(f.note||'').slice(0,200)}));
+  const o={account:round(wallets.account)||0,cash:round(wallets.cash)||0};
+  cfg.wx.forEach(w=>{o[w.id]=round(wallets[w.id])||0});
+  wallets=o;
+}
+wNorm();
 
 if(!Array.isArray(cats)||!cats.length)cats=defaults.concat(read(K.c,[]));
 cats.forEach(c=>{if(c.parent===undefined)c.parent=null;});
@@ -226,16 +317,13 @@ function migr(d){
 const paid=d=>round(d.payments.reduce((s,p)=>s+Number(p.amount),0)), rem=d=>Math.max(0,round(d.amount-paid(d)));
 
 function save(){
-  try{
-    localStorage.setItem(K.e,JSON.stringify(expenses));
-    localStorage.setItem(K.w,JSON.stringify(wallets));
-    localStorage.setItem(K.d,JSON.stringify(debts));
-    localStorage.setItem(K.c2,JSON.stringify(cats));
-    localStorage.setItem(K.s,JSON.stringify(cfg));
-    localStorage.setItem(K.r,JSON.stringify(recurring));
-    localStorage.setItem(K.m,JSON.stringify(moves));
-    localStorage.setItem(K.g,JSON.stringify(goals));
-  }catch{msg('تعذر حفظ البيانات')}
+  let lsOk=true;const data={};
+  const put=(k,v)=>{const j=JSON.stringify(v);data[k]=j;try{localStorage.setItem(k,j)}catch{lsOk=false}};
+  put(K.e,expenses);put(K.w,wallets);put(K.d,debts);put(K.c2,cats);put(K.s,cfg);put(K.r,recurring);put(K.m,moves);put(K.g,goals);
+  const seq=(window.__seq=(window.__seq||0)+1);
+  try{localStorage.setItem('masarifi.seq',seq)}catch{lsOk=false}
+  const idbOk=!!(window.__idb&&window.__idb.save(seq,data));
+  if(!lsOk&&!idbOk)msg('تعذر حفظ البيانات');
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
@@ -283,7 +371,7 @@ function applyRecurring(){
   const now=new Date(),cur=now.getFullYear()*12+now.getMonth(),dom=now.getDate();
   recurring.forEach(r=>{
     const amt=round(r.amount);
-    if(!((r.wallet==='cash'||r.wallet==='account')&&amt>0))return;
+    if(!(wOk(r.wallet)&&amt>0))return;
     const m=/^(\d{4})-(\d{2})$/.exec(r.lastApplied||'');
     let start=m?(+m[1])*12+(+m[2]-1)+1:cur;
     start=Math.max(start,cur-11);
@@ -314,10 +402,8 @@ function toggleNav(){ nav(tab==='expenses'?'settings':'expenses') }
 function render(scrollTop=false){
   applyTheme(); applyLang();
   if(!isDragging) document.querySelectorAll('.drag-clone').forEach(x=>x.remove());
-  document.querySelector('#bank').textContent=fmt(wallets.account);
-  document.querySelector('#cash').textContent=fmt(wallets.cash);
-  document.querySelector('#lblBank').textContent=T(cfg.wBank||'الحساب البنكي');
-  document.querySelector('#lblCash').textContent=T(cfg.wCash||'النقدية / الجيب');
+  {const WL=wList(),sm=WL.length>2,tot=round(WL.reduce((a,w)=>a+(wallets[w.id]||0),0));
+   document.querySelector('#hbal').innerHTML=(sm?`<div class="balance sm" data-go="wallets" style="grid-column:1/-1">💰 ${esc(T('الرصيد الإجمالي'))}<strong>${fmt(tot)}</strong></div>`:'')+WL.map(w=>`<div class="balance${sm?' sm':''}" data-go="wallets">${w.ico} <span>${esc(T(w.id==='account'?(cfg.wBank||'الحساب البنكي'):w.id==='cash'?(cfg.wCash||'النقدية / الجيب'):w.name))}</span><strong>${fmt(wallets[w.id]||0)}</strong></div>`).join('')}
   
   const navBtn = document.getElementById('navToggleBtn');
   if(tab === 'expenses') {
@@ -419,6 +505,10 @@ function buildFilterCatOptions(selectedId) {
   return html;
 }
 
+function favHTML(){
+  if(!cfg.favs.length)return'';
+  return `<details class="card grp" open><summary>⭐ المفضلة</summary><div style="margin-top:14px">${cfg.favs.map(f=>`<div class="row" style="padding:5px 0;gap:8px"><button type="button" class="secondary" style="flex:1;display:flex;justify-content:space-between;gap:8px;text-align:start" data-favadd="${esc(f.id)}"><span>${esc((wList().find(w=>w.id===f.wallet)||{ico:'👛'}).ico)} ${esc(cat(f.category).emoji)} ${esc(f.note||cat(f.category).name)}</span><b>${fmt(f.amount)}</b></button><button type="button" class="danger" style="padding:8px 12px" data-favdel="${esc(f.id)}">✕</button></div>`).join('')}</div></details>`;
+}
 function backupNag(){
   if(expenses.length<5)return'';
   const last=Number(cfg.lastBackup)||0;
@@ -427,16 +517,17 @@ function backupNag(){
 }
 
 function expView(){
-  return backupNag()+`<div class="card">
+  return backupNag()+favHTML()+`<div class="card">
     <h2>➕ ${esc(T('إضافة مصروف'))}</h2>
     <form id="ef">
       <div class="grid">
         <div class="field"><label>${esc(T('المبلغ'))} (${CURRENCY})</label><input name="amount" type="number" min=".01" step=".01" required></div>
-        <div class="field"><label>${esc(T('طريقة الدفع'))}</label><select name="wallet"><option value="cash">💵 ${esc(T('نقدية'))}</option><option value="account">💳 ${esc(T('بنك'))}</option></select></div>
+        <div class="field"><label>${esc(T('طريقة الدفع'))}</label><select name="wallet">${wOpts('cash')}</select></div>
         <div class="field"><label>${esc(T('الفئة'))}</label><select name="category">${buildCatOptions()}</select></div>
         <div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div>
       </div>
       <div class="field"><label>${esc(T('ملاحظة'))}</label><input name="note" maxlength="200" placeholder="${esc(T('تفاصيل اختيارية...'))}"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin:6px 0 0;cursor:pointer"><input type="checkbox" name="fav" style="width:20px;height:20px"> ⭐ ${esc(T('حفظ كمفضلة'))}</label>
       <button style="width:100%; margin-top:8px;">${esc(T('حفظ المصروف'))}</button>
     </form>
   </div>
@@ -452,8 +543,7 @@ function expView(){
         </select>
         <select id="filterWallet">
           <option value="all">${esc(T('كل المحافظ'))}</option>
-          <option value="cash" ${filterWallet==='cash'?'selected':''}>💵 ${esc(T(cfg.wCash||'نقدية'))}</option>
-          <option value="account" ${filterWallet==='account'?'selected':''}>💳 ${esc(T(cfg.wBank||'بنك'))}</option>
+          ${wList().map(w=>`<option value="${esc(w.id)}" ${filterWallet===w.id?'selected':''}>${w.ico} ${esc(T(w.name))}</option>`).join('')}
         </select>
       </div>
       <div class="filter-row">
@@ -486,28 +576,35 @@ function refreshExpList(){
 }
 
 function walletView(){
+  const ICONS=['👛','🏧','💰','🏠','📱','🎯','🚗','🎁'], full=wList().length>=WMAX;
   return backBtn()+`
   <details class="card grp">
     <summary>🏷️ ${esc(T('أسماء المحافظ'))}</summary>
     <form id="wnf" style="margin-top:14px;">
-      <div class="grid">
-        <div class="field"><label>🏦 ${esc(T('اسم الحساب البنكي'))}</label><input name="wBank" value="${esc(cfg.wBank||'الحساب البنكي')}" required maxlength="20" placeholder="${esc(T('مثال: CIB'))}"></div>
-        <div class="field"><label>💵 ${esc(T('اسم النقدية'))}</label><input name="wCash" value="${esc(cfg.wCash||'النقدية / الجيب')}" required maxlength="20" placeholder="${esc(T('مثال: المحفظة'))}"></div>
-      </div>
+      ${wList().map(w=>{const ex=w.id!=='account'&&w.id!=='cash',nm=w.id==='account'?'wBank':w.id==='cash'?'wCash':'wx_'+w.id,val=w.id==='account'?(cfg.wBank||'الحساب البنكي'):w.id==='cash'?(cfg.wCash||'النقدية / الجيب'):w.name,lab=w.id==='account'?'اسم الحساب البنكي':w.id==='cash'?'اسم النقدية':'اسم المحفظة',ph=w.id==='account'?'مثال: CIB':w.id==='cash'?'مثال: المحفظة':'';return `<div class="field"><label>${esc(T(lab))}</label><div class="row" style="gap:8px"><input name="ico_${esc(w.id)}" value="${esc(w.ico)}" maxlength="8" style="width:64px;text-align:center;font-size:20px" aria-label="${esc(T('الأيقونة'))}"><input name="${esc(nm)}" value="${esc(val)}" required maxlength="20" style="flex:1"${ph?` placeholder="${esc(T(ph))}"`:''}>${ex?`<button type="button" class="danger" style="padding:8px 12px" data-delwx="${esc(w.id)}">${esc(T('حذف'))}</button>`:''}</div></div>`}).join('')}
       <button style="width:100%;">${esc(T('حفظ الأسماء'))}</button>
     </form>
   </details>
   <details class="card grp">
+    <summary>➕ ${esc(T('إضافة محفظة'))}</summary>
+    <form id="wxf" style="margin-top:14px;">
+      ${full?`<div class="muted" style="margin-bottom:8px">${esc(T('الحد الأقصى 6 محافظ'))}</div>`:''}
+      <div class="grid"><div class="field"><label>${esc(T('اسم المحفظة'))}</label><input name="name" required maxlength="20" placeholder="${esc(T('مثال: بريد الجزائر'))}"></div><div class="field"><label>${esc(T('الأيقونة'))}</label><input name="ico" maxlength="8" placeholder="👛" style="text-align:center;font-size:20px"></div></div>
+      <div class="row" style="flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px">${ICONS.map(i=>`<button type="button" class="secondary" style="padding:6px 10px;font-size:18px" data-pickico="${i}">${i}</button>`).join('')}</div>
+      <button style="width:100%;"${full?' disabled':''}>${esc(T('إضافة محفظة'))}</button>
+    </form>
+  </details>
+  <details class="card grp">
     <summary>⚖️ ${esc(T('تعديل الرصيد'))}</summary>
-    <form id="wf" style="margin-top:14px;"><div class="grid"><div class="field"><label>🏦 ${esc(T(cfg.wBank||'الحساب البنكي'))}</label><input name="account" type="number" step=".01" value="${wallets.account}" required></div><div class="field"><label>💵 ${esc(T(cfg.wCash||'النقدية'))}</label><input name="cash" type="number" step=".01" value="${wallets.cash}" required></div></div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
+    <form id="wf" style="margin-top:14px;"><div class="grid">${wList().map(w=>`<div class="field"><label>${w.ico} ${esc(T(w.name))}</label><input name="b_${esc(w.id)}" type="number" step=".01" value="${wallets[w.id]||0}" required></div>`).join('')}</div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
   </details>
   <details class="card grp">
     <summary>📥 ${esc(T('إيداع'))}</summary>
-    <form id="df" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>${esc(T('المحفظة'))}</label><select name="wallet"><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div></div><div class="grid"><div class="field"><label>${esc(T('المصدر'))}</label><select name="source"><option value="راتب">${esc(T('راتب'))}</option><option value="عمل إضافي">${esc(T('عمل إضافي'))}</option><option value="هدية">${esc(T('هدية'))}</option><option value="أخرى">${esc(T('أخرى'))}</option></select></div><div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div></div><button style="width:100%;">${esc(T('إيداع'))}</button></form>
+    <form id="df" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>${esc(T('المحفظة'))}</label><select name="wallet">${wOpts('cash')}</select></div></div><div class="grid"><div class="field"><label>${esc(T('المصدر'))}</label><select name="source"><option value="راتب">${esc(T('راتب'))}</option><option value="عمل إضافي">${esc(T('عمل إضافي'))}</option><option value="هدية">${esc(T('هدية'))}</option><option value="أخرى">${esc(T('أخرى'))}</option></select></div><div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div></div><button style="width:100%;">${esc(T('إيداع'))}</button></form>
   </details>
   <details class="card grp">
     <summary>🔄 ${esc(T('تحويل بين المحافظ'))}</summary>
-    <form id="tf" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('من'))}</label><select name="from"><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option></select></div><div class="field"><label>${esc(T('إلى'))}</label><select name="to"><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div></div><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><button style="width:100%;">${esc(T('تحويل'))}</button></form>
+    <form id="tf" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('من'))}</label><select name="from">${wOpts('account')}</select></div><div class="field"><label>${esc(T('إلى'))}</label><select name="to">${wOpts('cash')}</select></div></div><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><button style="width:100%;">${esc(T('تحويل'))}</button></form>
   </details>`+movesHTML();
 }
   function debtRow(d){
@@ -534,14 +631,13 @@ function walletView(){
     </div>
     <div class="bar" style="margin-top:12px;"><i style="width:${pc}%"></i></div>
     <div class="muted" style="font-size:12px; margin-top:6px;">${r>0?`مسدد ${fmt(p)} · المتبقي <b>${fmt(r)}</b>`:'<span class="green">✔ مسدد بالكامل</span>'}</div>
-    ${d.payments.map(x=>`<div class="row muted" style="margin-top:8px; font-size:12px; background:var(--bg); padding:6px; border-radius:8px;"><span>${esc(x.date||'')} · ${fmt(x.amount)} ${x.wallet?'('+(x.wallet==='cash'?'نقدية':'بنك')+')':''}</span><button class="danger" style="padding:2px 8px; border:0; background:transparent;" data-delpay="${esc(x.id)}" data-debt="${esc(d.id)}">✕</button></div>`).join('')}
+    ${d.payments.map(x=>`<div class="row muted" style="margin-top:8px; font-size:12px; background:var(--bg); padding:6px; border-radius:8px;"><span>${esc(x.date||'')} · ${fmt(x.amount)} ${x.wallet?'('+wName(x.wallet)+')':''}</span><button class="danger" style="padding:2px 8px; border:0; background:transparent;" data-delpay="${esc(x.id)}" data-debt="${esc(d.id)}">✕</button></div>`).join('')}
     ${payDebt===d.id&&r>0?`<form class="pf" data-id="${esc(d.id)}" data-type="${d.type}" style="margin-top:12px; background:var(--bg); padding:12px; border-radius:12px;">
       <div class="grid"><div class="field"><label>مبلغ الدفعة</label><input name="amount" type="number" min=".01" max="${r}" step=".01" value="${r}" required></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${today()}" required></div></div>
       <div style="background:var(--card); padding:10px; border-radius:12px; border:1px solid var(--line); margin-bottom:10px;">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:20px;height:20px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة</span></label>
         <select name="wallet" style="margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text);">
-          <option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option>
-          <option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option>
+          ${wOpts('cash')}
         </select>
       </div>
       <div class="row"><button style="padding:8px 16px;">حفظ</button><button type="button" class="secondary" style="padding:8px 16px;" data-cancelpay>إلغاء</button></div>
@@ -551,12 +647,12 @@ function walletView(){
 
 const incomeNow=()=>round(moves.filter(m=>m.type==='deposit'&&pKey(m.date)===pKey(today())).reduce((t,m)=>t+Number(m.amount),0));
 function movesHTML(){
-  const W=w=>w==='cash'?T(cfg.wCash||'نقدية'):T(cfg.wBank||'بنك');
+  const W=wName;
   const SRC=['راتب','عمل إضافي','هدية','أخرى'];
   const rows=moves.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,30).map(m=>{
     if(m.id===editMove&&m.type==='deposit'){
       const so=SRC.includes(m.source)?SRC:SRC.concat(m.source?[m.source]:[]);
-      return `<form class="mef" data-id="${esc(m.id)}" style="background:var(--bg);border-radius:12px;padding:10px;margin:8px 0"><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${m.amount}" required></div><div class="field"><label>المحفظة</label><select name="wallet"><option value="cash"${m.to==='cash'?' selected':''}>💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account"${m.to==='account'?' selected':''}>💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div></div><div class="grid"><div class="field"><label>المصدر</label><select name="source">${so.map(x=>`<option value="${esc(x)}"${x===m.source?' selected':''}>${esc(T(x))}</option>`).join('')}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(m.date)}" required></div></div><div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelmove>إلغاء</button></div></form>`;
+      return `<form class="mef" data-id="${esc(m.id)}" style="background:var(--bg);border-radius:12px;padding:10px;margin:8px 0"><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${m.amount}" required></div><div class="field"><label>المحفظة</label><select name="wallet">${wOpts(m.to)}</select></div></div><div class="grid"><div class="field"><label>المصدر</label><select name="source">${so.map(x=>`<option value="${esc(x)}"${x===m.source?' selected':''}>${esc(T(x))}</option>`).join('')}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(m.date)}" required></div></div><div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelmove>إلغاء</button></div></form>`;
     }
     return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><div style="display:flex;gap:6px">${m.type==='deposit'?`<button class="secondary" style="padding:4px 10px;font-size:12px" data-editmove="${esc(m.id)}">تعديل</button>`:''}<button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div></div>`;
   }).join('');
@@ -577,8 +673,7 @@ function goalsHTML(){
       <div style="background:var(--bg); padding:8px; border-radius:10px; border:1px solid var(--line); margin-top:8px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text);font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:18px;height:18px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة</span></label>
         <select name="wallet" style="margin-top:6px; width:100%; padding:6px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--text); font-size:12px;">
-          <option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option>
-          <option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option>
+          ${wOpts('cash')}
         </select>
       </div>
     </form></div>`}).join('');
@@ -592,8 +687,7 @@ function debtView(){
   <div style="background:var(--bg); padding:10px; border-radius:12px; border:1px solid var(--line); margin-top:10px; margin-bottom:12px;">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:20px;height:20px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة حسب نوع الدين</span></label>
     <select name="wallet" style="margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text);">
-      <option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option>
-      <option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option>
+      ${wOpts('cash')}
     </select>
   </div>
   <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div></details>
@@ -610,7 +704,7 @@ function recurringHTML(){
         </div>
         <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
           <div class="field" style="margin:0;"><label>الفئة</label><select name="category">${buildCatOptions(r.category)}</select></div>
-          <div class="field" style="margin:0;"><label>طريقة الدفع</label><select name="wallet"><option value="cash"${r.wallet==='cash'?' selected':''}>💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account"${r.wallet==='account'?' selected':''}>💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div>
+          <div class="field" style="margin:0;"><label>طريقة الدفع</label><select name="wallet">${wOpts(r.wallet)}</select></div>
         </div>
         <div class="field" style="margin-top:8px;"><label>ملاحظة</label><input name="note" maxlength="100" value="${esc(r.note||'')}"></div>
         <div class="row" style="gap:8px;"><button type="submit" style="flex:1;padding:8px;">حفظ</button><button type="button" class="secondary" data-cancelrec style="flex:1;padding:8px;">إلغاء</button></div>
@@ -619,7 +713,7 @@ function recurringHTML(){
     return `<div class="row" style="padding:10px 0; border-bottom:1px solid var(--line);">
       <div>
         <b>${esc(r.note || cat(r.category).name)}</b>
-        <div class="muted" style="font-size:12px;">${fmt(r.amount)} · يوم ${r.dayOfMonth} · ${r.wallet==='cash'?esc(T(cfg.wCash||'نقدية')):esc(T(cfg.wBank||'بنك'))}</div>
+        <div class="muted" style="font-size:12px;">${fmt(r.amount)} · يوم ${r.dayOfMonth} · ${esc(wName(r.wallet))}</div>
       </div>
       <div class="row" style="gap:6px; flex-shrink:0;">
         <button class="secondary" style="padding:6px 10px; font-size:12px;" data-editrec="${esc(r.id)}">تعديل</button>
@@ -635,7 +729,7 @@ function recurringHTML(){
           <div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div>
           <div class="field"><label>اليوم من الشهر (1-31)</label><input name="day" type="number" min="1" max="31" required></div>
           <div class="field"><label>الفئة</label><select name="category">${buildCatOptions()}</select></div>
-          <div class="field"><label>طريقة الدفع</label><select name="wallet"><option value="cash">💵 ${esc(T(cfg.wCash||'نقدية'))}</option><option value="account">💳 ${esc(T(cfg.wBank||'بنك'))}</option></select></div>
+          <div class="field"><label>طريقة الدفع</label><select name="wallet">${wOpts('cash')}</select></div>
         </div>
         <div class="field"><label>ملاحظة</label><input name="note" maxlength="100" placeholder="مثال: إيجار، إنترنت..."></div>
         <div class="field"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;background:var(--bg);border-radius:12px;border:1px solid var(--line);font-weight:600;margin:0;"><input type="checkbox" name="startNext" style="width:22px;height:22px;accent-color:var(--primary);margin:0;cursor:pointer;"> تخطَّ الشهر الحالي وابدأ من الشهر القادم</label></div>
@@ -675,6 +769,26 @@ function trendHTML(){
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr;margin-top:10px;">${grid}<polygon points="${X(0)},${Y(0)} ${pts.join(' ')} ${X(N-1)},${Y(0)}" fill="var(--primary)" opacity="0.1"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round"/>${N<=16?c.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--primary)"/>`).join(''):`<circle cx="${X(N-1)}" cy="${Y(c[N-1])}" r="3.5" fill="var(--primary)"/>`}${lb}</svg>`
 }
 
+function weekHTML(){
+  const t0=ts(today()),dow=new Date(t0).getUTCDay(),ws=t0-dow*DAY;
+  const cur=Array(7).fill(0),prev=Array(7).fill(0),bc={};
+  expenses.forEach(e=>{if(!e.date)return;const i=Math.round((ts(String(e.date).slice(0,10))-ws)/DAY),a=Number(e.amount);if(i>=0&&i<7){cur[i]+=a;bc[e.category]=(bc[e.category]||0)+a}else if(i>=-7&&i<0)prev[i+7]+=a});
+  const tot=round(cur.reduce((a,b)=>a+b,0)),pt=round(prev.slice(0,dow+1).reduce((a,b)=>a+b,0)),avg=round(tot/(dow+1)),ch=pt>0?Math.round((tot-pt)/pt*100):null;
+  const badge=ch===null?'<span class="muted">—</span>':`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`;
+  const top=Object.entries(bc).sort((a,b)=>b[1]-a[1])[0],mx=Math.max(...cur,1),W=320,H=130,bw=30,gap=(W-7*bw)/8;
+  const bars=cur.map((v,i)=>{const h=Math.round(v/mx*80),x=gap+i*(bw+gap),y=100-h,dt=new Date(ws+i*DAY);return `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h,v>0?2:0)}" rx="5" fill="var(--primary)" opacity="${i===dow?1:(i>dow?.15:.5)}"/>${v>0?`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" font-size="9" fill="var(--text)">${round(v).toLocaleString(LOC[LANG])}</text>`:''}<text x="${x+bw/2}" y="118" text-anchor="middle" font-size="10" fill="var(--muted)">${dt.toLocaleDateString(LOC[LANG],{weekday:'short',timeZone:'UTC'})}</text>`}).join('');
+  return `<details class="card grp" open><summary>🗓️ ملخص الأسبوع</summary><div style="margin-top:14px"><svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr">${bars}</svg><div class="row" style="margin-top:8px"><span>مصاريف هذا الأسبوع</span><b>${fmt(tot)}</b></div><div class="row"><span>المتوسط اليومي</span><b>${fmt(avg)}</b></div><div class="row"><span>مقارنة بنفس الأيام من الأسبوع الماضي</span>${badge}</div>${top?`<div class="row"><span>أعلى فئة هذا الأسبوع</span><b>${cat(top[0]).emoji} ${esc(cat(top[0]).name)} · ${fmt(top[1])}</b></div>`:''}</div></details>`;
+}
+function catTrendHTML(){
+  const N=6,keys=[];let k=pKey(today());for(let i=0;i<N;i++){keys.unshift(k);k=prevMonth(k)}
+  const by={};
+  expenses.forEach(e=>{const i=keys.indexOf(mOf(e));if(i<0)return;(by[e.category]=by[e.category]||Array(N).fill(0))[i]+=Number(e.amount)});
+  const rows=Object.entries(by).map(([c,a])=>({c,a:a.map(round),t:round(a.reduce((x,y)=>x+y,0))})).sort((x,y)=>y.t-x.t).slice(0,6);
+  const body=rows.length?rows.map(r=>{const mx=Math.max(...r.a,1),l=r.a[N-1],p=r.a[N-2],ch=p>0?Math.round((l-p)/p*100):null,badge=ch===null?'':`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`,col=safeCol(cat(r.c).color);
+    const svg=`<svg viewBox="0 0 84 34" style="width:84px;height:34px;flex:none;direction:ltr">${r.a.map((v,i)=>{const h=v>0?Math.max(2,Math.round(v/mx*30)):0;return `<rect x="${i*14+2}" y="${32-h}" width="10" height="${h}" rx="2" fill="${col}" opacity="${i===N-1?1:.45}"/>`}).join('')}</svg>`;
+    return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);gap:10px"><div style="min-width:0;flex:1"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat(r.c).emoji} ${esc(cat(r.c).name)}</div><div class="muted" style="font-size:12px">${fmt(l)} ${badge}</div></div>${svg}</div>`}).join(''):'<div class="empty">لا توجد بيانات كافية</div>';
+  return `<details class="card grp"><summary>📈 الفئات عبر الأشهر</summary><div style="margin-top:14px"><div class="muted" style="font-size:12px;margin-bottom:6px">آخر 6 فترات — الشريط الداكن هو الفترة الحالية</div>${body}</div></details>`;
+}
 function statView(){
   let ms=expenses.filter(e=>mOf(e)===smo()),tot=sum(ms),by={};ms.forEach(e=>by[e.category]=round((by[e.category]||0)+Number(e.amount)));
   let rows=Object.entries(by).map(([k,v])=>({c:cat(k),v})).sort((a,b)=>b.v-a.v),pt=cmpMonth?sum(expenses.filter(e=>mOf(e)===cmpMonth)):0,ch=pt>0?Math.round((tot-pt)/pt*100):null,
@@ -752,7 +866,7 @@ function statView(){
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">الفترة المعروضة</div><b style="font-size:16px;">${fmt(tot)}</b></div>
     </div>
     <div class="row" style="margin-top:12px;"><span class="muted">نسبة التغيّر</span>${badge}</div>`:'<div class="muted">اختر شهراً لمقارنته بالفترة الحالية.</div>'}
-  </div></details>`;
+  </div></details>`+weekHTML()+catTrendHTML();
 }
 
 const visible = () => {
@@ -777,7 +891,7 @@ const visible = () => {
 
 function expRow(e){
   if(e.id===editExp) return `<form class="expense-item eef" data-id="${esc(e.id)}" style="background:var(--bg);">
-    <div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${e.amount}" required></div><div class="field"><label>الدفع</label><select name="wallet"><option value="cash"${e.wallet==='cash'?' selected':''}>💵 نقدية</option><option value="account"${e.wallet==='account'?' selected':''}>💳 بنك</option></select></div><div class="field"><label>الفئة</label><select name="category">${buildCatOptions(e.category)}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(e.date)}" required></div></div>
+    <div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${e.amount}" required></div><div class="field"><label>الدفع</label><select name="wallet">${wOpts(e.wallet)}</select></div><div class="field"><label>الفئة</label><select name="category">${buildCatOptions(e.category)}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(e.date)}" required></div></div>
     <div class="field"><label>ملاحظة</label><input name="note" maxlength="200" value="${esc(e.note||'')}"></div>
     <div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelexp>إلغاء</button></div>
   </form>`;
@@ -794,7 +908,7 @@ function expRow(e){
       <div class="expense-amount">${fmt(e.amount)}</div>
     </div>
     <div class="expense-bottom">
-      <div class="expense-meta">${e.wallet==='cash'?'💵 '+esc(T(cfg.wCash||'نقدية')):'💳 '+esc(T(cfg.wBank||'بنك'))}</div>
+      <div class="expense-meta">${esc(wLbl(e.wallet))}</div>
       <div class="expense-actions">
         <button class="secondary" data-editexp="${esc(e.id)}">تعديل</button>
         <button class="danger" data-del="${esc(e.id)}">حذف</button>
@@ -898,7 +1012,7 @@ function exportXls(all, range){
   let pe = all ? expenses.slice() : (range ? range : periodExp(smo()));
   let label = all ? 'كل الفترات' : (range ? 'نطاق محدد' : smo());
   const X=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),cl=v=>typeof v==='number'?`<Cell><Data ss:Type="Number">${v}</Data></Cell>`:`<Cell><Data ss:Type="String">${X(T(v))}</Data></Cell>`,sh=(n,h,r)=>`<Worksheet ss:Name="${n}"><Table><Row>${h.map(cl).join('')}</Row>${r.map(x=>`<Row>${x.map(cl).join('')}</Row>`).join('')}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><DisplayRightToLeft/></WorksheetOptions></Worksheet>`;
-  let x='<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+sh(T('المصاريف'),['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.slice().sort((a,b)=>a.date<b.date?1:-1).map(e=>[e.date,cat(e.category).name,Number(e.amount),e.wallet==='cash'?'نقدية':'بنك',e.note||'']))+sh(T('الفئات')+' '+label,['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).name,v,cat(c).limit||0]))+sh(T('الديون'),['الشخص','النوع','المبلغ','المسدد','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',Number(d.amount),paid(d),rem(d)]))+'</Workbook>';
+  let x='<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+sh(T('المصاريف'),['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.slice().sort((a,b)=>a.date<b.date?1:-1).map(e=>[e.date,cat(e.category).name,Number(e.amount),wName(e.wallet),e.note||'']))+sh(T('الفئات')+' '+label,['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).name,v,cat(c).limit||0]))+sh(T('الديون'),['الشخص','النوع','المبلغ','المسدد','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',Number(d.amount),paid(d),rem(d)]))+'</Workbook>';
   dl('masarifi-'+(all?'all':label)+'.xls','application/vnd.ms-excel',x); msg('تم تصدير ملف Excel');
 }
 
@@ -908,7 +1022,7 @@ function exportCsv(all, range){
   const q=v=>{v=String(v??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
   let csv=['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'].map(h=>q(T(h))).join(';')+'\r\n';
   pe.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
-    csv+=[q(e.date),q(cat(e.category).name),String(Number(e.amount)).replace('.',','),q(T(e.wallet==='cash'?'نقدية':'بنك')),q(e.note||'')].join(';')+'\r\n';
+    csv+=[q(e.date),q(cat(e.category).name),String(Number(e.amount)).replace('.',','),q(T(wName(e.wallet))),q(e.note||'')].join(';')+'\r\n';
   });
   dl('masarifi-'+label+'.csv','text/csv',csv); msg('تم تصدير ملف CSV');
 }
@@ -920,7 +1034,7 @@ function exportPdf(all, range){
   let tb=(h,r)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(y=>`<td>${esc(y)}</td>`).join('')}</tr>`).join('')}</table>`;
   document.querySelectorAll('#pa').forEach(x=>x.remove());
   let pa=document.createElement('div');pa.id='pa';
-  pa.innerHTML=`<h1>📒 تقرير مصاريفي — ${title}</h1><p>${all?'':'الفترة: '+title+(range?'':' ('+pRange(k)+')')+'<br>'}المجموع: <b>${esc(fmt(sum(pe)))}</b></p><h2>حسب الفئة</h2>${tb(['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).emoji+' '+cat(c).name,fmt(v),cat(c).limit>0?fmt(cat(c).limit):'—']))}<h2>المصاريف</h2>${tb(['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.map(e=>[e.date,cat(e.category).name,fmt(e.amount),e.wallet==='cash'?'نقدية':'بنك',e.note||'']))}<h2>الديون</h2>${tb(['الشخص','النوع','المبلغ','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',fmt(d.amount),fmt(rem(d))]))}`;
+  pa.innerHTML=`<h1>📒 تقرير مصاريفي — ${title}</h1><p>${all?'':'الفترة: '+title+(range?'':' ('+pRange(k)+')')+'<br>'}المجموع: <b>${esc(fmt(sum(pe)))}</b></p><h2>حسب الفئة</h2>${tb(['الفئة','المبلغ','السقف'],byCat(pe).map(([c,v])=>[cat(c).emoji+' '+cat(c).name,fmt(v),cat(c).limit>0?fmt(cat(c).limit):'—']))}<h2>المصاريف</h2>${tb(['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'],pe.map(e=>[e.date,cat(e.category).name,fmt(e.amount),wName(e.wallet),e.note||'']))}<h2>الديون</h2>${tb(['الشخص','النوع','المبلغ','المتبقي'],debts.map(d=>[d.person,d.type==='lend'?'لك':'عليك',fmt(d.amount),fmt(rem(d))]))}`;
   document.body.appendChild(pa); ico(pa); tr(pa); document.body.classList.add('printing');
   let finished=false, fbTimer;
   const done=()=>{if(finished)return;finished=true;pa.remove();document.body.classList.remove('printing');removeEventListener('afterprint',done);if(fbTimer)clearTimeout(fbTimer)};
@@ -994,7 +1108,7 @@ Object.assign(D,{"المزيد": ["Plus", "More"], "اليوم": ["Aujourd’hui
 Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["Navigateur non compatible hors ligne", "Browser does not support offline mode"], "يلزم فتح التطبيق عبر https": ["L’application doit être ouverte en https", "The app must be opened over https"], "جاهز للعمل دون اتصال": ["Prêt pour le mode hors ligne", "Ready to work offline"], "لم يكتمل التجهيز، افتح التطبيق مرة أخرى وأنت متصل": ["Préparation incomplète : rouvrez l’application en ligne", "Setup incomplete: reopen the app while online"], "تعذّر فحص التخزين المؤقت": ["Impossible de vérifier le cache", "Could not check the cache"]});
 Object.assign(D,{"اختر الفترة":["Choisir la période","Choose period"],"الفترة المعروضة":["Période affichée","Displayed period"],"يُسجَّل بتاريخ هذا اليوم من كل شهر ميلادي، وتُعوَّض الأشهر الفائتة تلقائياً عند فتح التطبيق.":["Enregistrée à cette date chaque mois civil ; les mois manqués sont rattrapés à l’ouverture de l’application.","Recorded on this day of each calendar month; missed months are caught up when the app opens."]});
 Object.assign(D,{"المال":["Argent","Money"],"التحليل والتخطيط":["Analyse et planification","Analysis & planning"]});
-Object.assign(D,{"تم تعديل الإيداع":["Dépôt modifié","Deposit updated"],"إجمالي السنة":["Total de l’année","Year total"],"المتوسط اليومي":["Moyenne quotidienne","Daily average"],"سجل الإيداعات والتحويلات":["Historique des dépôts et virements","Deposits & transfers log"],"لا توجد إيداعات أو تحويلات":["Aucun dépôt ni virement","No deposits or transfers"],"الفترة والتصدير":["Période et export","Period & export"],"ملخص الديون":["Résumé des dettes","Debts summary"],"ملخص الميزانية":["Résumé du budget","Budget summary"],"إضافة مصروف متكرر":["Ajouter une dépense récurrente","Add recurring expense"]});
+Object.assign(D,{"التخزين الداخلي الاحتياطي غير متاح في هذا المتصفح":["Stockage de secours interne indisponible dans ce navigateur","Internal backup storage is unavailable in this browser"],"تعذّر حفظ النسخة الداخلية":["Échec de la copie de secours interne","Internal backup copy failed"],"نسخة داخلية احتياطية سليمة":["Copie de secours interne en bon état","Internal backup copy is healthy"],"تمت استعادة بياناتك من النسخة الداخلية":["Vos données ont été restaurées depuis la copie interne","Your data was restored from the internal copy"],"تعذر حذف البيانات":["Impossible de supprimer les données","Could not delete the data"],"المفضلة":["Favoris","Favorites"],"حفظ كمفضلة":["Enregistrer en favori","Save as favorite"],"تمت الإضافة إلى المفضلة":["Ajouté aux favoris","Added to favorites"],"الحد الأقصى 10 مفضلات":["Maximum 10 favoris","Maximum 10 favorites"],"ملخص الأسبوع":["Résumé de la semaine","Weekly summary"],"مصاريف هذا الأسبوع":["Dépenses cette semaine","This week's spending"],"مقارنة بنفس الأيام من الأسبوع الماضي":["Par rapport aux mêmes jours de la semaine dernière","Vs. same days last week"],"أعلى فئة هذا الأسبوع":["Catégorie principale cette semaine","Top category this week"],"الفئات عبر الأشهر":["Catégories par mois","Categories over months"],"لا توجد بيانات كافية":["Pas assez de données","Not enough data"],"آخر 6 فترات — الشريط الداكن هو الفترة الحالية":["6 dernières périodes — la barre foncée est la période en cours","Last 6 periods — the dark bar is the current one"],"محفظة غير صحيحة":["Portefeuille invalide","Invalid wallet"],"الرصيد الإجمالي":["Solde total","Total balance"],"محفظة محذوفة":["Portefeuille supprimé","Deleted wallet"],"إضافة محفظة":["Ajouter un portefeuille","Add wallet"],"اسم المحفظة":["Nom du portefeuille","Wallet name"],"الأيقونة":["Icône","Icon"],"مثال: بريد الجزائر":["Ex. : Algérie Poste","e.g. Algeria Post"],"الحد الأقصى 6 محافظ":["Maximum 6 portefeuilles","Maximum 6 wallets"],"اسم المحفظة مستخدم":["Nom déjà utilisé","Name already used"],"تمت إضافة المحفظة":["Portefeuille ajouté","Wallet added"],"تم حذف المحفظة":["Portefeuille supprimé","Wallet deleted"],"لا يمكن حذف محفظة لها رصيد أو عمليات":["Impossible de supprimer un portefeuille ayant un solde ou des opérations","Cannot delete a wallet with a balance or transactions"],"حذف هذه المحفظة؟":["Supprimer ce portefeuille ?","Delete this wallet?"],"تم تعديل الإيداع":["Dépôt modifié","Deposit updated"],"إجمالي السنة":["Total de l’année","Year total"],"المتوسط اليومي":["Moyenne quotidienne","Daily average"],"سجل الإيداعات والتحويلات":["Historique des dépôts et virements","Deposits & transfers log"],"لا توجد إيداعات أو تحويلات":["Aucun dépôt ni virement","No deposits or transfers"],"الفترة والتصدير":["Période et export","Period & export"],"ملخص الديون":["Résumé des dettes","Debts summary"],"ملخص الميزانية":["Résumé du budget","Budget summary"],"إضافة مصروف متكرر":["Ajouter une dépense récurrente","Add recurring expense"]});
 Object.assign(D,{
   "تخطَّ الشهر الحالي وابدأ من الشهر القادم":["Ignorer le mois en cours et commencer le mois suivant","Skip current month, start next month"],
   "تغيير يوم بداية الشهر سيعيد تجميع الميزانية والفترات للمصاريف السابقة. متابعة؟":["Changer le jour de début du mois regroupera à nouveau le budget et les périodes des dépenses passées. Continuer ?","Changing the month start day will regroup the budget and periods for previous expenses. Continue?"]
@@ -1018,7 +1132,14 @@ const _cf=window.confirm.bind(window);window.confirm=m=>_cf(T(m));
     <button id="export" style="width:100%; margin-bottom:8px;">تصدير JSON</button>
     <button class="secondary" id="import" style="width:100%; margin-bottom:8px;">استيراد JSON</button>
     <input id="file" type="file" accept=".json,application/json" hidden>
+    <div class="muted" style="font-size:12px;margin-top:6px">${esc(T(idbStatus()))}</div>
   </div>`;
+}
+function idbStatus(){
+  const I=window.__idb||{};
+  if(!I.db)return '⚠️ التخزين الداخلي الاحتياطي غير متاح في هذا المتصفح';
+  if(I.err)return '⚠️ تعذّر حفظ النسخة الداخلية';
+  return '✔ نسخة داخلية احتياطية سليمة';
 }
 
 function bind(){
@@ -1030,9 +1151,10 @@ function bind(){
   let pw1=document.querySelector('#pwf');if(pw1){pw1.onsubmit=async e=>{e.preventDefault();let f=new FormData(pw1),a=String(f.get('p1'));if(cfg.pw&&!(await checkPw(f.get('old'))))return msg('كلمة المرور الحالية غير صحيحة');if(a.length<4)return msg('4 أحرف على الأقل');if(a!==f.get('p2'))return msg('كلمتا المرور غير متطابقتين');cfg.pw=await newPw(a);save();render();msg('تم حفظ كلمة المرور')};let rm=document.querySelector('#rmpw');if(rm)rm.onclick=async()=>{if(!(await checkPw(pw1.elements.old.value)))return msg('أدخل كلمة المرور الحالية');if(!confirm('إزالة كلمة المرور؟'))return;delete cfg.pw;save();render();msg('تمت إزالة الحماية')};let ln=document.querySelector('#lockNow');if(ln)ln.onclick=lockNow;let al=document.querySelector('#al');if(al)al.onchange=()=>{cfg.autoLock=al.checked;save()}}
   
   let db = document.querySelector('#deleteAllDataBtn');
-  if(db) db.onclick = () => {
+  if(db) db.onclick = async () => {
       if(!confirm('🚨 هل أنت متأكد من حذف جميع البيانات؟ لا يمكن التراجع عن هذه الخطوة!')) return;
       if(!confirm('تأكيد أخير: هل تريد حذف كل شيء والبدء من الصفر؟')) return;
+      try{ if(window.__idb) await window.__idb.clear() }catch{ if(window.__idb) window.__idb.frozen=false; return msg('تعذر حذف البيانات') }
       try{Object.keys(localStorage).filter(k=>k.startsWith('masarifi.')).forEach(k=>localStorage.removeItem(k))}catch{}
       location.reload();
   };
@@ -1102,13 +1224,43 @@ function bind(){
     let f=new FormData(wnf);
     cfg.wBank = String(f.get('wBank')).trim() || 'الحساب البنكي';
     cfg.wCash = String(f.get('wCash')).trim() || 'النقدية / الجيب';
+    cfg.wIcoB=firstG(f.get('ico_account'));cfg.wIcoC=firstG(f.get('ico_cash'));
+    cfg.wx.forEach(w=>{const v=String(f.get('wx_'+w.id)||'').trim().slice(0,20);if(v)w.name=v;w.ico=firstG(f.get('ico_'+w.id))||'👛'});
     save(); render(); msg('تم تعديل الأسماء');
   };
 
+  document.querySelectorAll('[data-favadd]').forEach(b=>b.onclick=()=>{
+    const f=cfg.favs.find(x=>x.id===b.dataset.favadd);if(!f)return;
+    if(!wOk(f.wallet))return msg('محفظة غير صحيحة');
+    if(wallets[f.wallet]<f.amount&&!cfg.allowNeg)return msg('الرصيد غير كاف');
+    const nid=id(),w=f.wallet,a=f.amount;
+    wallets[w]=round(wallets[w]-a);expenses.push({id:nid,amount:a,wallet:w,category:f.category,date:today(),note:f.note||''});
+    save();render();
+    offerUndo(limitNote(f.category)||budgetNote()||'تم تسجيل المصروف',()=>{expenses=expenses.filter(e=>e.id!==nid);wallets[w]=round(wallets[w]+a);save();render()});
+  });
+  document.querySelectorAll('[data-favdel]').forEach(b=>b.onclick=()=>{cfg.favs=cfg.favs.filter(x=>x.id!==b.dataset.favdel);save();render()});
+  document.querySelectorAll('[data-pickico]').forEach(b=>b.onclick=()=>{const i=b.closest('form').querySelector('[name=ico]');if(i)i.value=b.dataset.pickico});
+  let wxf=document.querySelector('#wxf');
+  if(wxf) wxf.onsubmit=e=>{
+    e.preventDefault();
+    if(wList().length>=WMAX)return msg('الحد الأقصى 6 محافظ');
+    const f=new FormData(wxf),n=String(f.get('name')||'').trim().slice(0,20);
+    if(!n)return;
+    if(wList().some(w=>String(w.name).toLowerCase()===n.toLowerCase()))return msg('اسم المحفظة مستخدم');
+    const nid='w'+id();cfg.wx.push({id:nid,name:n,ico:firstG(f.get('ico'))||'👛'});wallets[nid]=0;
+    save();render();msg('تمت إضافة المحفظة');
+  };
+  document.querySelectorAll('[data-delwx]').forEach(b=>b.onclick=()=>{
+    const i=b.dataset.delwx;
+    if(round(wallets[i])!==0||wUsed(i))return msg('لا يمكن حذف محفظة لها رصيد أو عمليات');
+    if(!confirm('حذف هذه المحفظة؟'))return;
+    cfg.wx=cfg.wx.filter(w=>w.id!==i);delete wallets[i];if(filterWallet===i)filterWallet='all';
+    save();render();msg('تم حذف المحفظة');
+  });
   document.querySelectorAll('[data-editexp]').forEach(b=>b.onclick=()=>{editExp=b.dataset.editexp;render()});
   document.querySelectorAll('[data-cancelexp]').forEach(b=>b.onclick=()=>{editExp=null;render()});
   document.querySelectorAll('.eef').forEach(fm=>fm.onsubmit=e=>{e.preventDefault();let f=new FormData(fm),x=expenses.find(v=>v.id===fm.dataset.id),a=round(f.get('amount')),w=f.get('wallet');if(!x||a<=0)return msg('مبلغ غير صحيح');wallets[x.wallet]=round(wallets[x.wallet]+x.amount);if(wallets[w]<a&&!cfg.allowNeg){wallets[x.wallet]=round(wallets[x.wallet]-x.amount);return msg('الرصيد غير كاف')}wallets[w]=round(wallets[w]-a);Object.assign(x,{amount:a,wallet:w,category:f.get('category'),date:f.get('date'),note:f.get('note').trim()});editExp=null;save();render();msg('تم التعديل')});
-  let ef=document.querySelector('#ef');if(ef)ef.onsubmit=e=>{e.preventDefault();let f=new FormData(ef),a=round(f.get('amount')),w=f.get('wallet');if(a<=0)return msg('مبلغ غير صحيح');if(wallets[w]<a&&!cfg.allowNeg)return msg('الرصيد غير كاف');wallets[w]=round(wallets[w]-a);expenses.push({id:id(),amount:a,wallet:w,category:f.get('category'),date:f.get('date'),note:f.get('note').trim()});save();render();msg(limitNote(f.get('category'))||budgetNote()||'تم تسجيل المصروف')};
+  let ef=document.querySelector('#ef');if(ef)ef.onsubmit=e=>{e.preventDefault();let f=new FormData(ef),a=round(f.get('amount')),w=f.get('wallet');if(a<=0)return msg('مبلغ غير صحيح');if(wallets[w]<a&&!cfg.allowNeg)return msg('الرصيد غير كاف');wallets[w]=round(wallets[w]-a);expenses.push({id:id(),amount:a,wallet:w,category:f.get('category'),date:f.get('date'),note:f.get('note').trim()});let fvMsg='';if(f.get('fav')){const fv={id:id(),amount:a,wallet:w,category:f.get('category'),note:f.get('note').trim()};if(!cfg.favs.some(x=>x.amount===a&&x.wallet===w&&x.category===fv.category&&x.note===fv.note)){if(cfg.favs.length>=10)fvMsg='الحد الأقصى 10 مفضلات';else{cfg.favs.push(fv);fvMsg='تمت الإضافة إلى المفضلة'}}}save();render();msg(limitNote(f.get('category'))||fvMsg||budgetNote()||'تم تسجيل المصروف')};
   
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
     if(!confirm('حذف هذا المصروف؟'))return;
@@ -1169,7 +1321,7 @@ function bind(){
 
   let df=document.querySelector('#df');if(df)df.onsubmit=e=>{e.preventDefault();let f=new FormData(df),a=round(f.get('amount'));if(a<=0)return msg('مبلغ غير صحيح');wallets[f.get('wallet')]=round(wallets[f.get('wallet')]+a);moves.push({id:id(),type:'deposit',amount:a,to:f.get('wallet'),date:f.get('date')||today(),source:String(f.get('source')||'').trim()});save();render();msg('تم تحديث الأرصدة')};
   let tf=document.querySelector('#tf');if(tf)tf.onsubmit=e=>{e.preventDefault();let f=new FormData(tf),a=round(f.get('amount')),from=f.get('from'),to=f.get('to');if(from===to||a<=0)return msg('تحقق من التحويل');if(wallets[from]<a&&!cfg.allowNeg)return msg('الرصيد غير كاف');wallets[from]=round(wallets[from]-a);wallets[to]=round(wallets[to]+a);moves.push({id:id(),type:'transfer',amount:a,from,to,date:today(),source:''});save();render();msg('تم تحديث الأرصدة')};
-  let wf=document.querySelector('#wf');if(wf)wf.onsubmit=e=>{e.preventDefault();let f=new FormData(wf),a=round(f.get('account')),c=round(f.get('cash'));if((a<0||c<0)&&!cfg.allowNeg)return msg('مبلغ غير صحيح');wallets={account:a,cash:c};save();render();msg('تم تحديث الأرصدة')};
+  let wf=document.querySelector('#wf');if(wf)wf.onsubmit=e=>{e.preventDefault();let f=new FormData(wf),nb={},bad=false;wList().forEach(w=>{const v=round(f.get('b_'+w.id));nb[w.id]=v;if(v<0)bad=true});if(bad&&!cfg.allowNeg)return msg('مبلغ غير صحيح');wallets=nb;save();render();msg('تم تحديث الأرصدة')};
   
   let bf=document.querySelector('#bf');
   if(bf) bf.onsubmit=e=>{
@@ -1281,7 +1433,7 @@ function bind(){
   document.querySelectorAll('.mef').forEach(fm=>fm.onsubmit=e=>{
     e.preventDefault();
     const m=moves.find(x=>x.id===fm.dataset.id);if(!m||m.type!=='deposit')return;
-    const f=new FormData(fm),a=round(f.get('amount')),nw=f.get('wallet')==='account'?'account':'cash';
+    const f=new FormData(fm),a=round(f.get('amount')),nw=wOk(f.get('wallet'))?f.get('wallet'):m.to;
     if(!(a>0))return msg('مبلغ غير صحيح');
     const w2=Object.assign({},wallets);
     w2[m.to]=round(w2[m.to]-m.amount);w2[nw]=round(w2[nw]+a);
@@ -1359,7 +1511,8 @@ function bind(){
   if(file)file.onchange=async()=>{
     try{
       let d=JSON.parse(await file.files[0].text());
-      if(!Array.isArray(d.expenses)||!Array.isArray(d.debts)||!(Array.isArray(d.cats)||Array.isArray(d.customCats))||!d.wallets||!['account','cash'].every(k=>Number.isFinite(Number(d.wallets[k])))||!d.expenses.every(x=>Number(x.amount)>0&&['account','cash'].includes(x.wallet))||!d.debts.every(x=>Number(x.amount)>0&&['lend','borrow'].includes(x.type)))throw 0;
+      const wxIn=(Array.isArray(d.cfg&&d.cfg.wx)?d.cfg.wx:[]).filter(w=>w&&typeof w.id==='string'&&w.id&&w.name).slice(0,WMAX-2).map(w=>({id:w.id,name:String(w.name).slice(0,20),ico:firstG(w.ico)||'👛'})),ids=['account','cash'].concat(wxIn.map(w=>w.id));
+      if(!Array.isArray(d.expenses)||!Array.isArray(d.debts)||!(Array.isArray(d.cats)||Array.isArray(d.customCats))||!d.wallets||!['account','cash'].every(k=>Number.isFinite(Number(d.wallets[k])))||!d.expenses.every(x=>Number(x.amount)>0&&ids.includes(x.wallet))||!d.debts.every(x=>Number(x.amount)>0&&['lend','borrow'].includes(x.type)))throw 0;
       if(!confirm('سيستبدل الاستيراد البيانات الحالية. متابعة؟')){file.value='';return}
       
       expenses=d.expenses.map(x=>Object.assign({},x,{id:String(x.id||id()),amount:round(x.amount),date:String(x.date||'').slice(0,10),note:String(x.note||'')}));
@@ -1367,12 +1520,13 @@ function bind(){
       let nc=Array.isArray(d.cats)?d.cats:defaults.concat(d.customCats);
       nc=nc.filter(c=>c&&c.id&&c.name&&c.emoji).map(c=>Object.assign({},c,{id:String(c.id),name:String(c.name),emoji:String(c.emoji),color:safeCol(c.color),limit:Math.max(0,round(c.limit)),parent:c.parent?String(c.parent):null}));
       cats=nc.length?nc:defaults.slice();
-      if(Array.isArray(d.recurring)) recurring=d.recurring.filter(r=>r&&Number(r.amount)>0&&['cash','account'].includes(r.wallet)).map(r=>({id:String(r.id||id()),amount:round(r.amount),dayOfMonth:Math.min(31,Math.max(1,parseInt(r.dayOfMonth)||1)),category:String(r.category||''),wallet:r.wallet,note:String(r.note||''),lastApplied:String(r.lastApplied||'')}));
-      if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80)),rolloverBudget:!!d.cfg.rolloverBudget,autoArchive:!!d.cfg.autoArchive,allowNeg:!!d.cfg.allowNeg,wBank:d.cfg.wBank||'الحساب البنكي',wCash:d.cfg.wCash||'النقدية / الجيب'});
-      moves=Array.isArray(d.moves)?d.moves.filter(m=>m&&Number(m.amount)>0&&['deposit','transfer'].includes(m.type)).map(m=>({id:String(m.id||id()),type:m.type,amount:round(m.amount),to:m.to==='account'?'account':'cash',from:m.from==='account'?'account':'cash',date:String(m.date||'').slice(0,10),source:String(m.source||'')})):[];
+      if(Array.isArray(d.recurring)) recurring=d.recurring.filter(r=>r&&Number(r.amount)>0&&ids.includes(r.wallet)).map(r=>({id:String(r.id||id()),amount:round(r.amount),dayOfMonth:Math.min(31,Math.max(1,parseInt(r.dayOfMonth)||1)),category:String(r.category||''),wallet:r.wallet,note:String(r.note||''),lastApplied:String(r.lastApplied||'')}));
+      if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80)),rolloverBudget:!!d.cfg.rolloverBudget,autoArchive:!!d.cfg.autoArchive,allowNeg:!!d.cfg.allowNeg,wBank:d.cfg.wBank||'الحساب البنكي',wCash:d.cfg.wCash||'النقدية / الجيب',wx:wxIn,wIcoB:firstG(d.cfg.wIcoB),wIcoC:firstG(d.cfg.wIcoC),favs:Array.isArray(d.cfg.favs)?d.cfg.favs:[]});
+      moves=Array.isArray(d.moves)?d.moves.filter(m=>m&&Number(m.amount)>0&&['deposit','transfer'].includes(m.type)).map(m=>({id:String(m.id||id()),type:m.type,amount:round(m.amount),to:ids.includes(m.to)?m.to:'cash',from:ids.includes(m.from)?m.from:'account',date:String(m.date||'').slice(0,10),source:String(m.source||'')})):[];
       goals=Array.isArray(d.goals)?d.goals.filter(g=>g&&g.name&&Number(g.target)>0).map(g=>({id:String(g.id||id()),name:String(g.name),target:round(g.target),saved:Math.max(0,round(g.saved)),date:String(g.date||'').slice(0,10)})):[];
-      wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};
-      save();render();msg('تم الاستيراد')
+      wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};wxIn.forEach(w=>{wallets[w.id]=round(d.wallets[w.id])});
+      debts.forEach(x=>x.payments.forEach(p=>{if(p.wallet&&!ids.includes(p.wallet))delete p.wallet}));
+      wNorm();save();render();msg('تم الاستيراد')
     }catch{msg('ملف غير صالح')}
   }
 }
@@ -1762,14 +1916,18 @@ addEventListener('popstate',e=>{
   tab=(e.state&&e.state.tab)||'expenses';editCat=payDebt=editExp=editMove=editRec=editDebt=null;render(true);
 });
 function updBar(){const b=document.createElement('div');b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9000;background:#0f766e;color:#fff;padding:12px;text-align:center;font-weight:600';b.innerHTML='<span>يوجد تحديث جديد</span> <button id="updBtn" style="margin-inline-start:12px;padding:6px 14px;background:#fff;color:#0f766e">تحديث الآن</button>';document.body.appendChild(b);tr(b);b.querySelector('#updBtn').onclick=()=>location.reload()}
+let _focusAdd=false;try{const q=new URLSearchParams(location.search),tb=q.get('tab');if(q.get('add')==='1'){tab='expenses';_focusAdd=true}else if(['stats','wallets','debts','budget','goals','recurring'].includes(tb))tab=tb;if(q.has('add')||q.has('tab'))history.replaceState(history.state,'',location.pathname)}catch(e){}
 autoArch();applyRecurring();
 if(cfg.pw)lockNow();
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(cfg.pw&&cfg.autoLock!==false&&Date.now()>=(window.__nlu||0))lockNow()}else{window.__nlu=0;const n=expenses.length,a=autoArch();applyRecurring();if((expenses.length!==n||a)&&!document.querySelector('#lock'))render()}});
 render();
+if(_focusAdd&&!document.querySelector('#lock')){const _a=document.querySelector('#ef [name=amount]');if(_a)_a.focus()}
+if(window.__idb&&window.__idb.restored)setTimeout(()=>msg('تمت استعادة بياناتك من النسخة الداخلية'),700);
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 if('serviceWorker'in navigator){
   let had=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;updBar()}});
-  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(e=>{window.__swErr=String((e&&e.message)||e).slice(0,70)}))
+  const _regSW=()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(e=>{window.__swErr=String((e&&e.message)||e).slice(0,70)});
+  document.readyState==='complete'?_regSW():addEventListener('load',_regSW)
 }
 </script></body></html>
