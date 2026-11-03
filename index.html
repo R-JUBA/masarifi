@@ -654,7 +654,10 @@ function movesHTML(){
       const so=SRC.includes(m.source)?SRC:SRC.concat(m.source?[m.source]:[]);
       return `<form class="mef" data-id="${esc(m.id)}" style="background:var(--bg);border-radius:12px;padding:10px;margin:8px 0"><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${m.amount}" required></div><div class="field"><label>المحفظة</label><select name="wallet">${wOpts(m.to)}</select></div></div><div class="grid"><div class="field"><label>المصدر</label><select name="source">${so.map(x=>`<option value="${esc(x)}"${x===m.source?' selected':''}>${esc(T(x))}</option>`).join('')}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(m.date)}" required></div></div><div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelmove>إلغاء</button></div></form>`;
     }
-    return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><div style="display:flex;gap:6px">${m.type==='deposit'?`<button class="secondary" style="padding:4px 10px;font-size:12px" data-editmove="${esc(m.id)}">تعديل</button>`:''}<button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div></div>`;
+    if(m.id===editMove&&m.type==='transfer'){
+      return `<form class="mef" data-id="${esc(m.id)}" style="background:var(--bg);border-radius:12px;padding:10px;margin:8px 0"><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${m.amount}" required></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(m.date)}" required></div></div><div class="grid"><div class="field"><label>من</label><select name="from">${wOpts(m.from)}</select></div><div class="field"><label>إلى</label><select name="to">${wOpts(m.to)}</select></div></div><div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelmove>إلغاء</button></div></form>`;
+    }
+    return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><div style="display:flex;gap:6px"><button class="secondary" style="padding:4px 10px;font-size:12px" data-editmove="${esc(m.id)}">تعديل</button><button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div></div>`;
   }).join('');
   return `<details class="card grp"><summary>📜 سجل الإيداعات والتحويلات</summary><div style="margin-top:10px">${rows||'<div class="empty">لا توجد إيداعات أو تحويلات</div>'}</div></details>`;
 }
@@ -1437,7 +1440,19 @@ function bind(){
   document.querySelectorAll('[data-cancelmove]').forEach(b=>b.onclick=()=>{editMove=null;render()});
   document.querySelectorAll('.mef').forEach(fm=>fm.onsubmit=e=>{
     e.preventDefault();
-    const m=moves.find(x=>x.id===fm.dataset.id);if(!m||m.type!=='deposit')return;
+    const m=moves.find(x=>x.id===fm.dataset.id);if(!m)return;
+    if(m.type==='transfer'){
+      const f=new FormData(fm),a=round(f.get('amount')),nf=wOk(f.get('from'))?f.get('from'):m.from,nt=wOk(f.get('to'))?f.get('to'):m.to;
+      if(!(a>0)||nf===nt)return msg('تحقق من التحويل');
+      const w2=Object.assign({},wallets);
+      w2[m.from]=round(w2[m.from]+m.amount);w2[m.to]=round(w2[m.to]-m.amount);
+      w2[nf]=round(w2[nf]-a);w2[nt]=round(w2[nt]+a);
+      if(!cfg.allowNeg&&[m.from,m.to,nf,nt].some(k=>w2[k]<0&&w2[k]<wallets[k]))return msg('الرصيد غير كاف');
+      wallets=w2;m.amount=a;m.from=nf;m.to=nt;m.date=f.get('date')||m.date;
+      editMove=null;save();render();msg('تم تعديل التحويل');
+      return;
+    }
+    if(m.type!=='deposit')return;
     const f=new FormData(fm),a=round(f.get('amount')),nw=wOk(f.get('wallet'))?f.get('wallet'):m.to;
     if(!(a>0))return msg('مبلغ غير صحيح');
     const w2=Object.assign({},wallets);
