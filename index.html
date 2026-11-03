@@ -22,30 +22,31 @@ button:active{transform:scale(.97)}
 .btn-nav{background:rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px)}
 .btn-nav:active{background:rgba(255,255,255,.3)}
 .hero p{margin:0 0 16px;font-size:14px;opacity:.9}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.balance,.card{padding:16px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);margin:12px 0;border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.balance,.card{padding:14px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);margin:10px 0;border:1px solid var(--line)}
 .balance{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer;transition:transform .15s}
 .balance:active{transform:scale(.98)}
 .balance strong{display:block;font-size:24px;margin-top:4px;font-weight:800}
-.field{margin:12px 0}
-.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px;font-weight:600}
+.field{margin:8px 0}
+.grid>.field{margin:0}
+.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:4px;font-weight:600}
 .field input,.field select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);transition:border-color .2s}
 .field input:focus,.field select:focus{border-color:var(--primary);background:var(--card)}
-h2{font-size:18px;margin:0 0 16px;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;gap:8px}
+h2{font-size:18px;margin:0 0 10px;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;gap:8px}
 .muted{font-size:13px;color:var(--muted)}
 .green{color:var(--green)}
 .red{color:var(--danger)}
 .danger{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
 .danger:active{background:#fca5a5;color:#fff}
 .secondary{background:var(--bg);color:var(--text);border:1px solid var(--line)}
-.empty{text-align:center;color:var(--muted);padding:24px 0;font-size:14px}
-.search-bar{display:flex;gap:8px;margin-bottom:12px}
+.empty{text-align:center;color:var(--muted);padding:16px 0;font-size:14px}
+.search-bar{display:flex;gap:8px;margin-bottom:8px}
 .search-bar input{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
 .search-bar select{width:120px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
-.filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.filter-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
 .filter-row select{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
 .filter-row input[type="date"]{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);min-width:0;font-size:13px}
-.expense-item{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.02)}
+.expense-item{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.02)}
 .expense-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .expense-title{font-weight:700;font-size:15px}
 .expense-note{font-size:13px;color:var(--muted);margin-top:2px}
@@ -451,7 +452,7 @@ function arMonth(ym){
     ['⚙️ المزيد', [['categories','🏷️','الفئات'],['security','🔒','الحماية'],['backup','💾','النسخ الاحتياطي'],['theme','🎨','المظهر'],['lang','🌐','اللغة']]]
   ];
   return groups.map(([t,items])=>`<details class="card grp"><summary>${t}</summary>
-    <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
       ${items.map(([k,i,n])=>`<button class="tile" data-go="${k}"><span class="ic">${i}</span><span style="font-size:13px; font-weight:600;">${n}</span></button>`).join('')}
     </div>
   </details>`).join('')+`
@@ -507,7 +508,7 @@ function buildFilterCatOptions(selectedId) {
 
 function favHTML(){
   if(!cfg.favs.length)return'';
-  return `<details class="card grp" open><summary>⭐ المفضلة</summary><div style="margin-top:14px">${cfg.favs.map(f=>`<div class="row" style="padding:5px 0;gap:8px"><button type="button" class="secondary" style="flex:1;display:flex;justify-content:space-between;gap:8px;text-align:start" data-favadd="${esc(f.id)}"><span>${esc((wList().find(w=>w.id===f.wallet)||{ico:'👛'}).ico)} ${esc(cat(f.category).emoji)} ${esc(f.note||cat(f.category).name)}</span><b>${fmt(f.amount)}</b></button><button type="button" class="danger" style="padding:8px 12px" data-favdel="${esc(f.id)}">✕</button></div>`).join('')}</div></details>`;
+  return `<details class="card grp" open><summary>⭐ المفضلة</summary><div style="margin-top:10px">${cfg.favs.map(f=>`<div class="row" style="padding:5px 0;gap:8px"><button type="button" class="secondary" style="flex:1;display:flex;justify-content:space-between;gap:8px;text-align:start" data-favadd="${esc(f.id)}"><span>${esc((wList().find(w=>w.id===f.wallet)||{ico:'👛'}).ico)} ${esc(cat(f.category).emoji)} ${esc(f.note||cat(f.category).name)}</span><b>${fmt(f.amount)}</b></button><button type="button" class="danger" style="padding:8px 12px" data-favdel="${esc(f.id)}">✕</button></div>`).join('')}</div></details>`;
 }
 function backupNag(){
   if(expenses.length<5)return'';
@@ -533,7 +534,7 @@ function expView(){
   </div>
   <details class="card grp">
     <summary>📝 ${esc(T('سجل المصاريف'))}</summary>
-    <div style="margin-top:14px;">
+    <div style="margin-top:10px;">
       <div class="search-bar">
         <input type="search" id="searchExp" placeholder="${esc(T('ابحث بالاسم أو المبلغ...'))}" value="${esc(searchQuery)}">
       </div>
@@ -580,14 +581,14 @@ function walletView(){
   return backBtn()+`
   <details class="card grp">
     <summary>🏷️ ${esc(T('أسماء المحافظ'))}</summary>
-    <form id="wnf" style="margin-top:14px;">
+    <form id="wnf" style="margin-top:10px;">
       ${wList().map(w=>{const ex=w.id!=='account'&&w.id!=='cash',nm=w.id==='account'?'wBank':w.id==='cash'?'wCash':'wx_'+w.id,val=w.id==='account'?(cfg.wBank||'الحساب البنكي'):w.id==='cash'?(cfg.wCash||'النقدية / الجيب'):w.name,lab=w.id==='account'?'اسم الحساب البنكي':w.id==='cash'?'اسم النقدية':'اسم المحفظة',ph=w.id==='account'?'مثال: CIB':w.id==='cash'?'مثال: المحفظة':'';return `<div class="field"><label>${esc(T(lab))}</label><div class="row" style="gap:8px"><input name="ico_${esc(w.id)}" value="${esc(w.ico)}" maxlength="8" style="width:64px;text-align:center;font-size:20px" aria-label="${esc(T('الأيقونة'))}"><input name="${esc(nm)}" value="${esc(val)}" required maxlength="20" style="flex:1"${ph?` placeholder="${esc(T(ph))}"`:''}>${ex?`<button type="button" class="danger" style="padding:8px 12px" data-delwx="${esc(w.id)}">${esc(T('حذف'))}</button>`:''}</div></div>`}).join('')}
       <button style="width:100%;">${esc(T('حفظ الأسماء'))}</button>
     </form>
   </details>
   <details class="card grp">
     <summary>➕ ${esc(T('إضافة محفظة'))}</summary>
-    <form id="wxf" style="margin-top:14px;">
+    <form id="wxf" style="margin-top:10px;">
       ${full?`<div class="muted" style="margin-bottom:8px">${esc(T('الحد الأقصى 6 محافظ'))}</div>`:''}
       <div class="grid"><div class="field"><label>${esc(T('اسم المحفظة'))}</label><input name="name" required maxlength="20" placeholder="${esc(T('مثال: بريد الجزائر'))}"></div><div class="field"><label>${esc(T('الأيقونة'))}</label><input name="ico" maxlength="8" placeholder="👛" style="text-align:center;font-size:20px"></div></div>
       <button style="width:100%;"${full?' disabled':''}>${esc(T('إضافة محفظة'))}</button>
@@ -595,15 +596,15 @@ function walletView(){
   </details>
   <details class="card grp">
     <summary>⚖️ ${esc(T('تعديل الرصيد'))}</summary>
-    <form id="wf" style="margin-top:14px;"><div class="grid">${wList().map(w=>`<div class="field"><label>${w.ico} ${esc(T(w.name))}</label><input name="b_${esc(w.id)}" type="number" step=".01" value="${wallets[w.id]||0}" required></div>`).join('')}</div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
+    <form id="wf" style="margin-top:10px;"><div class="grid">${wList().map(w=>`<div class="field"><label>${w.ico} ${esc(T(w.name))}</label><input name="b_${esc(w.id)}" type="number" step=".01" value="${wallets[w.id]||0}" required></div>`).join('')}</div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
   </details>
   <details class="card grp">
     <summary>📥 ${esc(T('إيداع'))}</summary>
-    <form id="df" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>${esc(T('المحفظة'))}</label><select name="wallet">${wOpts('cash')}</select></div></div><div class="grid"><div class="field"><label>${esc(T('المصدر'))}</label><select name="source"><option value="راتب">${esc(T('راتب'))}</option><option value="عمل إضافي">${esc(T('عمل إضافي'))}</option><option value="هدية">${esc(T('هدية'))}</option><option value="أخرى">${esc(T('أخرى'))}</option></select></div><div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div></div><button style="width:100%;">${esc(T('إيداع'))}</button></form>
+    <form id="df" style="margin-top:10px;"><div class="grid"><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>${esc(T('المحفظة'))}</label><select name="wallet">${wOpts('cash')}</select></div></div><div class="grid"><div class="field"><label>${esc(T('المصدر'))}</label><select name="source"><option value="راتب">${esc(T('راتب'))}</option><option value="عمل إضافي">${esc(T('عمل إضافي'))}</option><option value="هدية">${esc(T('هدية'))}</option><option value="أخرى">${esc(T('أخرى'))}</option></select></div><div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div></div><button style="width:100%;">${esc(T('إيداع'))}</button></form>
   </details>
   <details class="card grp">
     <summary>🔄 ${esc(T('تحويل بين المحافظ'))}</summary>
-    <form id="tf" style="margin-top:14px;"><div class="grid"><div class="field"><label>${esc(T('من'))}</label><select name="from">${wOpts('account')}</select></div><div class="field"><label>${esc(T('إلى'))}</label><select name="to">${wOpts('cash')}</select></div></div><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><button style="width:100%;">${esc(T('تحويل'))}</button></form>
+    <form id="tf" style="margin-top:10px;"><div class="grid"><div class="field"><label>${esc(T('من'))}</label><select name="from">${wOpts('account')}</select></div><div class="field"><label>${esc(T('إلى'))}</label><select name="to">${wOpts('cash')}</select></div></div><div class="field"><label>${esc(T('المبلغ'))}</label><input name="amount" type="number" min=".01" step=".01" required></div><button style="width:100%;">${esc(T('تحويل'))}</button></form>
   </details>`+movesHTML();
 }
   function debtRow(d){
@@ -653,9 +654,9 @@ function movesHTML(){
       const so=SRC.includes(m.source)?SRC:SRC.concat(m.source?[m.source]:[]);
       return `<form class="mef" data-id="${esc(m.id)}" style="background:var(--bg);border-radius:12px;padding:10px;margin:8px 0"><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" value="${m.amount}" required></div><div class="field"><label>المحفظة</label><select name="wallet">${wOpts(m.to)}</select></div></div><div class="grid"><div class="field"><label>المصدر</label><select name="source">${so.map(x=>`<option value="${esc(x)}"${x===m.source?' selected':''}>${esc(T(x))}</option>`).join('')}</select></div><div class="field"><label>التاريخ</label><input name="date" type="date" value="${esc(m.date)}" required></div></div><div class="row"><button style="flex:1;">حفظ</button><button type="button" class="secondary" style="flex:1;" data-cancelmove>إلغاء</button></div></form>`;
     }
-    return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><div style="display:flex;gap:6px">${m.type==='deposit'?`<button class="secondary" style="padding:4px 10px;font-size:12px" data-editmove="${esc(m.id)}">تعديل</button>`:''}<button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div></div>`;
+    return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div><b>${m.type==='deposit'?'إيداع':'تحويل'} · ${fmt(m.amount)}</b><div class="muted" style="font-size:12px">${esc(m.date)} · ${m.type==='deposit'?W(m.to)+(m.source?' · '+esc(m.source):''):W(m.from)+' ⟶ '+W(m.to)}</div></div><div style="display:flex;gap:6px">${m.type==='deposit'?`<button class="secondary" style="padding:4px 10px;font-size:12px" data-editmove="${esc(m.id)}">تعديل</button>`:''}<button class="danger" style="padding:4px 10px;font-size:12px" data-delmove="${esc(m.id)}">حذف</button></div></div>`;
   }).join('');
-  return `<details class="card grp"><summary>📜 سجل الإيداعات والتحويلات</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد إيداعات أو تحويلات</div>'}</div></details>`;
+  return `<details class="card grp"><summary>📜 سجل الإيداعات والتحويلات</summary><div style="margin-top:10px">${rows||'<div class="empty">لا توجد إيداعات أو تحويلات</div>'}</div></details>`;
 }
 
 function goalHint(g,left){const d=Math.round((ts(g.date)-ts(today()))/DAY);return d<=0?'':'يلزم '+fmt(left/Math.max(1,Math.ceil(d/30)))+' شهرياً'}
@@ -676,13 +677,13 @@ function goalsHTML(){
         </select>
       </div>
     </form></div>`}).join('');
-  return `<details class="card grp"><summary>🏆 هدف جديد</summary><div style="margin-top:14px"><form id="gf"><div class="field"><label>اسم الهدف</label><input name="name" required maxlength="60"></div><div class="grid"><div class="field"><label>المبلغ المستهدف</label><input name="target" type="number" min=".01" step=".01" required></div><div class="field"><label>التاريخ المستهدف (اختياري)</label><input name="date" type="date"></div></div><button style="width:100%">حفظ الهدف</button></form></div></details><details class="card grp"><summary>أهدافي</summary><div style="margin-top:14px">${rows||'<div class="empty">لا توجد أهداف</div>'}</div></details>`;
+  return `<details class="card grp"><summary>🏆 هدف جديد</summary><div style="margin-top:10px"><form id="gf"><div class="field"><label>اسم الهدف</label><input name="name" required maxlength="60"></div><div class="grid"><div class="field"><label>المبلغ المستهدف</label><input name="target" type="number" min=".01" step=".01" required></div><div class="field"><label>التاريخ المستهدف (اختياري)</label><input name="date" type="date"></div></div><button style="width:100%">حفظ الهدف</button></form></div></details><details class="card grp"><summary>أهدافي</summary><div style="margin-top:10px">${rows||'<div class="empty">لا توجد أهداف</div>'}</div></details>`;
 }
 
 function debtView(){
   let l=debts.filter(d=>d.type==='lend').reduce((s,d)=>s+rem(d),0),b=debts.filter(d=>d.type==='borrow').reduce((s,d)=>s+rem(d),0);
-  return backBtn()+`<details class="card grp" open><summary>📊 ملخص الديون</summary><div class="grid" style="margin-top:14px"><div class="card green" style="margin:0">لك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(l)}</strong></div><div class="card red" style="margin:0">عليك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(b)}</strong></div></div></details>
-  <details class="card grp"><summary>➕ إضافة دين</summary><div style="margin-top:14px"><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
+  return backBtn()+`<details class="card grp" open><summary>📊 ملخص الديون</summary><div class="grid" style="margin-top:10px"><div class="card green" style="margin:0">لك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(l)}</strong></div><div class="card red" style="margin:0">عليك (المتبقي)<strong style="display:block; font-size:20px;">${fmt(b)}</strong></div></div></details>
+  <details class="card grp"><summary>➕ إضافة دين</summary><div style="margin-top:10px"><form id="bf"><div class="field"><label>الشخص</label><input name="person" required maxlength="100"></div><div class="grid"><div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div><div class="field"><label>النوع</label><select name="type"><option value="lend">لك (أقرضته)</option><option value="borrow">عليك (استلفت)</option></select></div></div>
   <div style="background:var(--bg); padding:10px; border-radius:12px; border:1px solid var(--line); margin-top:10px; margin-bottom:12px;">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;margin:0;"><input type="checkbox" name="link" style="width:20px;height:20px;accent-color:var(--primary);margin:0;"><span>تعديل رصيد المحفظة حسب نوع الدين</span></label>
     <select name="wallet" style="margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text);">
@@ -690,7 +691,7 @@ function debtView(){
     </select>
   </div>
   <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div></details>
-  <details class="card grp"><summary>📜 سجل الديون</summary><div style="margin-top:14px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
+  <details class="card grp"><summary>📜 سجل الديون</summary><div style="margin-top:10px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
 }
 
 function recurringHTML(){
@@ -722,7 +723,7 @@ function recurringHTML(){
   }).join('');
 
   return `
-    <details class="card grp"><summary>🔁 إضافة مصروف متكرر</summary><div style="margin-top:14px">
+    <details class="card grp"><summary>🔁 إضافة مصروف متكرر</summary><div style="margin-top:10px">
       <form id="rf">
         <div class="grid">
           <div class="field"><label>المبلغ</label><input name="amount" type="number" min=".01" step=".01" required></div>
@@ -736,7 +737,7 @@ function recurringHTML(){
         <button style="width:100%; margin-top:8px;">حفظ القالب</button>
       </form>
     </div></details>
-    <details class="card grp"><summary>📋 القائمة المتكررة</summary><div style="margin-top:14px">
+    <details class="card grp"><summary>📋 القائمة المتكررة</summary><div style="margin-top:10px">
       ${rows || '<div class="empty">لا توجد مصاريف متكررة.</div>'}
     </div></details>
     <div class="card" style="margin-top:12px;">
@@ -776,7 +777,7 @@ function weekHTML(){
   const badge=ch===null?'<span class="muted">—</span>':`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`;
   const top=Object.entries(bc).sort((a,b)=>b[1]-a[1])[0],mx=Math.max(...cur,1),W=320,H=130,bw=30,gap=(W-7*bw)/8;
   const bars=cur.map((v,i)=>{const h=Math.round(v/mx*80),x=gap+i*(bw+gap),y=100-h,dt=new Date(ws+i*DAY);return `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h,v>0?2:0)}" rx="5" fill="var(--primary)" opacity="${i===dow?1:(i>dow?.15:.5)}"/>${v>0?`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" font-size="9" fill="var(--text)">${round(v).toLocaleString(LOC[LANG])}</text>`:''}<text x="${x+bw/2}" y="118" text-anchor="middle" font-size="10" fill="var(--muted)">${dt.toLocaleDateString(LOC[LANG],{weekday:'short',timeZone:'UTC'})}</text>`}).join('');
-  return `<details class="card grp" open><summary>🗓️ ملخص الأسبوع</summary><div style="margin-top:14px"><svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr">${bars}</svg><div class="row" style="margin-top:8px"><span>مصاريف هذا الأسبوع</span><b>${fmt(tot)}</b></div><div class="row"><span>المتوسط اليومي</span><b>${fmt(avg)}</b></div><div class="row"><span>مقارنة بنفس الأيام من الأسبوع الماضي</span>${badge}</div>${top?`<div class="row"><span>أعلى فئة هذا الأسبوع</span><b>${cat(top[0]).emoji} ${esc(cat(top[0]).name)} · ${fmt(top[1])}</b></div>`:''}</div></details>`;
+  return `<details class="card grp" open><summary>🗓️ ملخص الأسبوع</summary><div style="margin-top:10px"><svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;direction:ltr">${bars}</svg><div class="row" style="margin-top:8px"><span>مصاريف هذا الأسبوع</span><b>${fmt(tot)}</b></div><div class="row"><span>المتوسط اليومي</span><b>${fmt(avg)}</b></div><div class="row"><span>مقارنة بنفس الأيام من الأسبوع الماضي</span>${badge}</div>${top?`<div class="row"><span>أعلى فئة هذا الأسبوع</span><b>${cat(top[0]).emoji} ${esc(cat(top[0]).name)} · ${fmt(top[1])}</b></div>`:''}</div></details>`;
 }
 function catTrendHTML(){
   const N=6,keys=[];let k=pKey(today());for(let i=0;i<N;i++){keys.unshift(k);k=prevMonth(k)}
@@ -785,8 +786,8 @@ function catTrendHTML(){
   const rows=Object.entries(by).map(([c,a])=>({c,a:a.map(round),t:round(a.reduce((x,y)=>x+y,0))})).sort((x,y)=>y.t-x.t).slice(0,6);
   const body=rows.length?rows.map(r=>{const mx=Math.max(...r.a,1),l=r.a[N-1],p=r.a[N-2],ch=p>0?Math.round((l-p)/p*100):null,badge=ch===null?'':`<b class="${ch>0?'red':'green'}">${ch>0?'▲':'▼'} ${Math.abs(ch)}%</b>`,col=safeCol(cat(r.c).color);
     const svg=`<svg viewBox="0 0 84 34" style="width:84px;height:34px;flex:none;direction:ltr">${r.a.map((v,i)=>{const h=v>0?Math.max(2,Math.round(v/mx*30)):0;return `<rect x="${i*14+2}" y="${32-h}" width="10" height="${h}" rx="2" fill="${col}" opacity="${i===N-1?1:.45}"/>`}).join('')}</svg>`;
-    return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);gap:10px"><div style="min-width:0;flex:1"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat(r.c).emoji} ${esc(cat(r.c).name)}</div><div class="muted" style="font-size:12px">${fmt(l)} ${badge}</div></div>${svg}</div>`}).join(''):'<div class="empty">لا توجد بيانات كافية</div>';
-  return `<details class="card grp"><summary>📈 الفئات عبر الأشهر</summary><div style="margin-top:14px"><div class="muted" style="font-size:12px;margin-bottom:6px">آخر 6 فترات — الشريط الداكن هو الفترة الحالية</div>${body}</div></details>`;
+    return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line);gap:10px"><div style="min-width:0;flex:1"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat(r.c).emoji} ${esc(cat(r.c).name)}</div><div class="muted" style="font-size:12px">${fmt(l)} ${badge}</div></div>${svg}</div>`}).join(''):'<div class="empty">لا توجد بيانات كافية</div>';
+  return `<details class="card grp"><summary>📈 الفئات عبر الأشهر</summary><div style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">آخر 6 فترات — الشريط الداكن هو الفترة الحالية</div>${body}</div></details>`;
 }
 function statView(){
   let ms=expenses.filter(e=>mOf(e)===smo()),tot=sum(ms),by={};ms.forEach(e=>by[e.category]=round((by[e.category]||0)+Number(e.amount)));
@@ -815,7 +816,7 @@ function statView(){
   const netBalance = round(monthIncome - tot);
 
   return backBtn()+`
-  <details class="card grp" open><summary>📅 الفترة والتصدير</summary><div style="margin-top:14px">
+  <details class="card grp" open><summary>📅 الفترة والتصدير</summary><div style="margin-top:10px">
     <div class="field"><label>اختر الفترة</label><input id="sm" type="month" value="${esc(smo())}"></div><div class="muted">الفترة: ${arMonth(smo())} (${pRange(smo())})</div>
     <div class="row" style="margin-top:16px; flex-wrap:wrap; gap:8px;">
       <button id="xpdf" style="flex:1;">📄 PDF</button>
@@ -824,7 +825,7 @@ function statView(){
     </div>
   </div></details>
   
-  <details class="card grp" open><summary>💵 ملخص الفترة</summary><div style="margin-top:14px">
+  <details class="card grp" open><summary>💵 ملخص الفترة</summary><div style="margin-top:10px">
     <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">
       <div style="background:var(--bg); padding:10px; border-radius:10px; text-align:center;">
         <div class="muted" style="font-size:11px;">الدخل</div>
@@ -842,22 +843,22 @@ function statView(){
     ${monthIncome === 0 ? '<div class="muted" style="font-size:11px; margin-top:8px;">لا يوجد دخل مسجل في هذه الفترة. أضف إيداعاً من المحافظ.</div>' : ''}
   </div></details>
   
-  <details class="card grp"><summary>📅 إحصائيات سنة ${currentY}</summary><div style="margin-top:14px">
+  <details class="card grp"><summary>📅 إحصائيات سنة ${currentY}</summary><div style="margin-top:10px">
     <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px;">
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">إجمالي السنة</div><b style="font-size:16px;">${fmt(yearTotal)}</b></div>
       <div style="background:var(--bg); padding:12px; border-radius:12px;"><div class="muted">المتوسط اليومي</div><b style="font-size:16px;">${fmt(dailyAvg)}</b></div>
     </div>
     <div class="muted" style="font-size:12px; margin-top:10px;">بناءً على ${yearExp.length} عملية خلال ${daysPassedInYear} يوماً مضت.</div>
   </div></details>
-  <details class="card grp"><summary>📊 توزيع المصاريف</summary><div style="margin-top:14px">${tot>0?donutHTML(rows,tot):'<div class="empty">لا توجد مصاريف</div>'}</div></details>
-  <details class="card grp"><summary>🔮 توقعات نهاية الشهر</summary><div style="margin-top:14px">
+  <details class="card grp"><summary>📊 توزيع المصاريف</summary><div style="margin-top:10px">${tot>0?donutHTML(rows,tot):'<div class="empty">لا توجد مصاريف</div>'}</div></details>
+  <details class="card grp"><summary>🔮 توقعات نهاية الشهر</summary><div style="margin-top:10px">
     <div class="row">
       <span class="muted">بمعدل صرفك الحالي، ستنهي الشهر بـ:</span>
       <b style="font-size:18px; color:var(--primary);">${prediction>0 ? fmt(prediction) : '—'}</b>
     </div>
   </div></details>
-  <details class="card grp"><summary>📈 اتجاه الإنفاق</summary><div style="margin-top:14px">${trendHTML()}</div></details>
-  <details class="card grp"><summary>⚖️ مقارنة شهرية</summary><div style="margin-top:14px">
+  <details class="card grp"><summary>📈 اتجاه الإنفاق</summary><div style="margin-top:10px">${trendHTML()}</div></details>
+  <details class="card grp"><summary>⚖️ مقارنة شهرية</summary><div style="margin-top:10px">
     <div class="field"><label>قارن مع شهر</label><input id="cm" type="month" value="${esc(cmpMonth)}"></div>
     ${cmpMonth?`<div class="muted" style="margin-bottom:8px;">الفترة: ${arMonth(cmpMonth)} (${pRange(cmpMonth)})</div>
     <div class="grid">
@@ -932,12 +933,12 @@ function budgetHTML(){
   let left = round(effBudget - sp);
   let pc = effBudget>0 ? Math.min(100,sp/effBudget*100) : 0;
 
-  return `<details class="card grp" open><summary>📊 ملخص الميزانية</summary><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+  return `<details class="card grp" open><summary>📊 ملخص الميزانية</summary><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">
     <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">المصاريف</div><b>${fmt(sp)}</b></div>
     <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">المتبقي</div><b class="${left<0?'red':'green'}">${effBudget>0?fmt(left):'—'}</b></div>
     <div class="card" style="padding:12px; text-align:center; margin:0;"><div class="muted">العمليات</div><b>${ms.length}</b></div>
   </div></details>
-  <details class="card grp" open><summary>🎯 الميزانية الشهرية</summary><div style="margin-top:14px"><div class="muted" style="margin-bottom:12px;">الفترة الحالية: ${arMonth(mk)} (${pRange(mk)})</div>
+  <details class="card grp" open><summary>🎯 الميزانية الشهرية</summary><div style="margin-top:10px"><div class="muted" style="margin-bottom:12px;">الفترة الحالية: ${arMonth(mk)} (${pRange(mk)})</div>
   <form id="cfgf"><div class="grid"><div class="field"><label>الراتب الشهري</label><input name="salary" type="number" min="0" step=".01" value="${cfg.salary}"></div><div class="field"><label>حد الإنفاق الأساسي</label><input name="budget" type="number" min="0" step=".01" value="${cfg.budget}"></div></div><div class="grid"><div class="field"><label>بداية الشهر (1–31)</label><input name="startDay" type="number" min="1" max="31" value="${cfg.startDay}"></div><div class="field"><label>تنبيه عند (%)</label><input name="warn" type="number" min="1" max="100" value="${cfg.warn}"></div></div>
   
   <div class="field"><label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 8px; padding: 10px; background: var(--card); border-radius: 12px; border: 1px solid var(--line);">
@@ -996,7 +997,7 @@ function limitNote(id){
 }
 function limitsHTML(){
   let L=cats.filter(c=>c.limit>0);if(!L.length)return'';
-  return `<details class="card grp"><summary>🚧 سقف الفئات</summary><div style="margin-top:14px">${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--primary)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div></details>`
+  return `<details class="card grp"><summary>🚧 سقف الفئات</summary><div style="margin-top:10px">${L.map(c=>{let sp=catSpent(c.id),p=sp/c.limit*100,col=p>=100?'var(--danger)':p>=cfg.warn?'#f59e0b':'var(--primary)';return `<div style="margin:16px 0;"><div class="row" style="margin-bottom:6px;"><span>${esc(c.emoji+' '+c.name)}</span><span class="${p>=100?'red':'muted'}">${fmt(sp)} / ${fmt(c.limit)}</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:${col}"></i></div>${p>=100?`<div class="red" style="font-size:12px; margin-top:4px;">⛔ تجاوزت السقف بـ ${fmt(sp-c.limit)}</div>`:p>=cfg.warn?`<div style="font-size:12px; color:#d97706; margin-top:4px;">⚠️ اقتربت من السقف (${Math.round(p)}٪)</div>`:''}</div>`}).join('')}</div></details>`
 }
   function securityView(){
   let has=!!cfg.pw;
@@ -1116,10 +1117,16 @@ Object.assign(D,{
 function T1(c){let L=LANG==='fr'?0:1,d=D[c];if(d)return d[L];if(c.includes(' · '))return c.split(' · ').map(x=>T(x)).join(' · ');for(const[re,v]of PAT)if(re.test(c))return c.replace(re,v[L]);let m=/^([^\p{L}\p{N}\s]+\s*)([\s\S]+)$/u.exec(c);if(m){let r=T1(m[2]);if(r!==m[2])return m[1]+r}return c}
 function T(s){if(LANG==='ar'||typeof s!=='string'||!s)return s;let m=/^(\s*)([\s\S]*?)(\s*)$/.exec(s);if(!m[2])return s;return m[1]+T1(m[2]).replace(/د\.ج/g,CUR_[LANG])+m[3]}
 
-const IC={"wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "sliders": "<path d=\"M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4\"/>", "bank": "<path d=\"M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2l8 5H4z\"/>", "cash": "<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>", "card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><path d=\"M2 10h20\"/>", "archive": "<rect width=\"20\" height=\"5\" x=\"2\" y=\"3\" rx=\"1\"/><path d=\"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4\"/>", "plus": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 12h8M12 8v8\"/>", "pencil": "<path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/><path d=\"m15 5 4 4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "x": "<path d=\"M18 6 6 18M6 6l12 12\"/>", "cal": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/>", "file": "<path d=\"M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z\"/><path d=\"M14 2v6h6M16 13H8M16 17H8M10 9H8\"/>", "chart": "<path d=\"M3 3v18h18M18 17V9M13 17V5M8 17v-3\"/>", "trend": "<path d=\"m22 7-8.5 8.5-5-5L2 17\"/><path d=\"M16 7h6v6\"/>", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01\"/>", "gauge": "<path d=\"m12 14 4-4M3.34 19a10 10 0 1 1 17.32 0\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 17.5v-11\"/>", "tag": "<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>", "save": "<path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><path d=\"M17 21v-8H7v8M7 3v5h8\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "palette": "<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\"/><path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20\"/>", "up": "<path d=\"m18 15-6-6-6 6\"/>", "down": "<path d=\"m6 9 6 6 6-6\"/>"},EM={"📒": "wallet", "⚙️": "sliders", "⚙": "sliders", "🏦": "bank", "💵": "cash", "💳": "card", "🗃️": "archive", "🗃": "archive", "➕": "plus", "✏️": "pencil", "✏": "pencil", "✔": "check", "✕": "x", "📅": "cal", "📄": "file", "📊": "chart", "📈": "trend", "⚖️": "scale", "⚖": "scale", "🎯": "target", "⛔": "ban", "⚠️": "alert", "⚠": "alert", "🚧": "gauge", "👛": "wallet", "🤝": "receipt", "🏷️": "tag", "🏷": "tag", "💾": "save", "🔒": "lock", "🎨": "palette", "🌐": "globe", "⬆️": "up", "⬇️": "down"},EMX=new RegExp('(⚙️|🗃️|✏️|⚖️|⚠️|🏷️|⬆️|⬇️|📒|⚙|🏦|💵|💳|🗃|➕|✏|✔|✕|📅|📄|📊|📈|⚖|🎯|⛔|⚠|🚧|👛|🤝|🏷|💾|🔒|🎨|🌐|🔁|🏆)'),SKIP=/^(OPTION|OPTGROUP|SCRIPT|STYLE|TEXTAREA|TITLE|text|tspan)$/i;
+const IC={"wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "sliders": "<path d=\"M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4\"/>", "bank": "<path d=\"M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2l8 5H4z\"/>", "cash": "<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>", "card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><path d=\"M2 10h20\"/>", "archive": "<rect width=\"20\" height=\"5\" x=\"2\" y=\"3\" rx=\"1\"/><path d=\"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4\"/>", "plus": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 12h8M12 8v8\"/>", "pencil": "<path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/><path d=\"m15 5 4 4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "x": "<path d=\"M18 6 6 18M6 6l12 12\"/>", "cal": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/>", "file": "<path d=\"M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z\"/><path d=\"M14 2v6h6M16 13H8M16 17H8M10 9H8\"/>", "chart": "<path d=\"M3 3v18h18M18 17V9M13 17V5M8 17v-3\"/>", "trend": "<path d=\"m22 7-8.5 8.5-5-5L2 17\"/><path d=\"M16 7h6v6\"/>", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01\"/>", "gauge": "<path d=\"m12 14 4-4M3.34 19a10 10 0 1 1 17.32 0\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 17.5v-11\"/>", "tag": "<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>", "save": "<path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><path d=\"M17 21v-8H7v8M7 3v5h8\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "palette": "<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\"/><path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20\"/>", "up": "<path d=\"m18 15-6-6-6 6\"/>", "down": "<path d=\"m6 9 6 6 6-6\"/>"},EM={"📒": "wallet", "⚙️": "sliders", "⚙": "sliders", "🏦": "bank", "💵": "cash", "💳": "card", "🗃️": "archive", "🗃": "archive", "➕": "plus", "✏️": "pencil", "✏": "pencil", "✔": "check", "✕": "x", "📅": "cal", "📄": "file", "📊": "chart", "📈": "trend", "⚖️": "scale", "⚖": "scale", "🎯": "target", "⛔": "ban", "⚠️": "alert", "⚠": "alert", "🚧": "gauge", "👛": "wallet", "🤝": "receipt", "🏷️": "tag", "🏷": "tag", "💾": "save", "🔒": "lock", "🎨": "palette", "🌐": "globe", "⬆️": "up", "⬇️": "down"},EMX=new RegExp('(⚙️|🗃️|✏️|⚖️|⚠️|🏷️|⬆️|⬇️|📒|⚙|🏦|💵|💳|🗃|➕|✏|✔|✕|📅|📄|📊|📈|⚖|🎯|⛔|⚠|🚧|👛|🤝|🏷|💾|🔒|🎨|🌐|🔁|🏆|📥|🔄|⭐|📜|🗓️|🗓)'),SKIP=/^(OPTION|OPTGROUP|SCRIPT|STYLE|TEXTAREA|TITLE|text|tspan)$/i;
 IC.repeat='<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>';
 IC.trophy='<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>';
 EM['🔁']='repeat';EM['🏆']='trophy';
+IC.inbox='<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>';
+IC.refresh='<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>';
+IC.star='<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>';
+IC.history='<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>';
+IC.cal2='<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>';
+EM['📥']='inbox';EM['🔄']='refresh';EM['⭐']='star';EM['📜']='history';EM['🗓️']='cal2';EM['🗓']='cal2';
 function textNodes(root){let w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),a=[],n;while(n=w.nextNode())a.push(n);return a}
 function ico(root){textNodes(root).forEach(n=>{let p=n.parentNode;if(!p||SKIP.test(p.nodeName)||!EMX.test(n.nodeValue))return;let f=document.createDocumentFragment();n.nodeValue.split(EMX).forEach((x,i)=>{if(i%2){let t=document.createElement('template');t.innerHTML='<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[EM[x]]+'</svg>';f.appendChild(t.content)}else if(x)f.appendChild(document.createTextNode(x))});p.replaceChild(f,n)})}
 function tr(root){textNodes(root).forEach(n=>{if(/^(SCRIPT|STYLE|TEXTAREA|TITLE)$/i.test(n.parentNode.nodeName))return;if(n.__o===undefined)n.__o=n.nodeValue;let v=T(n.__o);if(n.nodeValue!==v)n.nodeValue=v});root.querySelectorAll('[placeholder],[title],[label],datalist option[value]').forEach(el=>{el.__a=el.__a||{};['placeholder','title','label'].forEach(a=>{if(el.hasAttribute(a)){if(el.__a[a]===undefined)el.__a[a]=el.getAttribute(a);el.setAttribute(a,T(el.__a[a]))}});if(el.tagName==='OPTION'&&el.parentNode&&el.parentNode.tagName==='DATALIST'){if(el.__a.value===undefined)el.__a.value=el.getAttribute('value');el.setAttribute('value',T(el.__a.value))}})}
