@@ -518,42 +518,48 @@ function backupNag(){
   return `<div class="card" style="border-color:#f59e0b"><div class="row"><span>💾 لم تأخذ نسخة احتياطية منذ مدة</span><button class="secondary" data-go="backup" style="padding:6px 12px">نسخ الآن</button></div></div>`;
 }
 
+function addCatMains(){
+  const use={};expenses.forEach(e=>{const k=rootId(e.category);use[k]=(use[k]||0)+1});
+  return cats.filter(c=>!c.parent||!cats.some(m=>m.id===c.parent)).map((c,i)=>({c,i})).sort((x,y)=>(use[y.c.id]||0)-(use[x.c.id]||0)||x.i-y.i).map(o=>o.c);
+}
+function addCatOptions(selectedId){
+  return addCatMains().map(m=>'<option value="'+esc(m.id)+'"'+(m.id===selectedId?' selected':'')+'>'+esc(m.emoji+' '+T(m.name))+'</option>').join('');
+}
 let _scEdit=false,_scAdd=false;
 function mainOfSel(v){const c=cat(v);return c.parent&&cats.some(m=>m.id===c.parent)?c.parent:c.id}
 function renderSubChips(){
-  const box=document.querySelector('#subChips'),sel=document.querySelector('#ef [name=category]');if(!box||!sel)return;
-  const mid=mainOfSel(sel.value);
+  const box=document.querySelector('#subChips'),hid=document.querySelector('#ef [name=category]');if(!box||!hid)return;
+  const mid=mainOfSel(hid.value);
   if(mid!=='food'){box.innerHTML='';_scEdit=false;_scAdd=false;return}
   const subs=cats.filter(c=>c.parent===mid),on='background:var(--primary);color:#fff;border:1px solid var(--primary);',off='background:var(--bg);color:var(--text);border:1px solid var(--line);',base='width:auto;margin:0;padding:8px 14px;border-radius:999px;font-size:14px;display:inline-flex;align-items:center;gap:6px;',inp='border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);padding:10px;';
   box.innerHTML='<div class="field"><label>'+esc(T('النوع (اختياري)'))+'</label><div style="display:flex;flex-wrap:wrap;gap:8px">'
-    +subs.map(s=>'<button type="button" data-sc="'+esc(s.id)+'" style="'+base+(s.id===sel.value?on:off)+'">'+esc(s.emoji)+' '+esc(T(s.name))+(_scEdit?' <span data-scdel="'+esc(s.id)+'" style="padding:0 2px;font-weight:800">✕</span>':'')+'</button>').join('')
+    +subs.map(s=>'<button type="button" data-sc="'+esc(s.id)+'" style="'+base+(s.id===hid.value?on:off)+'">'+esc(s.emoji)+' '+esc(T(s.name))+(_scEdit?' <span data-scdel="'+esc(s.id)+'" style="padding:0 2px;font-weight:800">✕</span>':'')+'</button>').join('')
     +'<button type="button" data-scadd="1" style="'+base+(_scAdd?on:off)+'">➕</button>'
     +(subs.length?'<button type="button" data-scedit="1" style="'+base+(_scEdit?on:off)+'">✏️</button>':'')
     +'</div>'
     +(_scAdd?'<div style="display:flex;gap:8px;margin-top:8px"><input id="scEmo" maxlength="4" placeholder="🏷️" style="width:64px;text-align:center;'+inp+'"><input id="scName" maxlength="30" placeholder="'+esc(T('اسم النوع'))+'" style="flex:1;min-width:0;'+inp+'"><button type="button" data-scsave="1" style="width:auto;margin:0;padding:10px 16px">'+esc(T('حفظ'))+'</button></div>':'')
     +'</div>';
 }
-function delSubCat(sid,sel){
+function delSubCat(sid,hid){
   const c=cats.find(x=>x.id===sid);if(!c||!c.parent)return;const p=cat(c.parent);
   if(!confirm('حذف «'+c.name+'»؟ ستُنقل مصاريفه السابقة إلى «'+p.name+'».'))return;
   expenses.forEach(e=>{if(e.category===sid)e.category=p.id});
   recurring.forEach(r=>{if(r.category===sid)r.category=p.id});
   (cfg.favs||[]).forEach(f=>{if(f.category===sid)f.category=p.id});
   if(filterCat===sid)filterCat=p.id;
-  const v=sel.value===sid?p.id:sel.value;
+  if(hid.value===sid)hid.value=p.id;
   cats=cats.filter(x=>x.id!==sid);save();
-  sel.innerHTML=buildCatOptions(v);sel.value=v;
   renderSubChips();try{refreshExpList()}catch(e){}msg('تم حذف النوع');
 }
 function bindSubChips(){
-  const box=document.querySelector('#subChips'),sel=document.querySelector('#ef [name=category]');if(!box||!sel)return;
-  _scEdit=false;_scAdd=false;
-  sel.addEventListener('change',()=>{_scEdit=false;_scAdd=false;renderSubChips()});
+  const box=document.querySelector('#subChips'),sel=document.querySelector('#ef [name=catMain]'),hid=document.querySelector('#ef [name=category]');if(!box||!sel||!hid)return;
+  _scEdit=false;_scAdd=false;hid.value=sel.value;
+  sel.addEventListener('change',()=>{hid.value=sel.value;_scEdit=false;_scAdd=false;renderSubChips()});
   box.onclick=e=>{
-    const t=e.target,mid=mainOfSel(sel.value);
-    const d=t.closest('[data-scdel]');if(d){delSubCat(d.dataset.scdel,sel);return}
+    const t=e.target,mid=mainOfSel(hid.value);
+    const d=t.closest('[data-scdel]');if(d){delSubCat(d.dataset.scdel,hid);return}
     const b=t.closest('[data-sc]');
-    if(b){if(_scEdit)return;sel.value=sel.value===b.dataset.sc?mid:b.dataset.sc;renderSubChips();return}
+    if(b){if(_scEdit)return;hid.value=hid.value===b.dataset.sc?mid:b.dataset.sc;renderSubChips();return}
     if(t.closest('[data-scadd]')){_scAdd=!_scAdd;_scEdit=false;renderSubChips();if(_scAdd)setTimeout(()=>{const n=box.querySelector('#scName');if(n)n.focus()},0);return}
     if(t.closest('[data-scedit]')){_scEdit=!_scEdit;_scAdd=false;renderSubChips();return}
     if(t.closest('[data-scsave]')){
@@ -563,7 +569,7 @@ function bindSubChips(){
       const nc={id:id(),name:n,emoji:em,color:cat(mid).color,parent:mid};
       let last=-1;cats.forEach((c,i)=>{if(c.id===mid||c.parent===mid)last=i});
       cats.splice(last+1,0,nc);save();
-      sel.innerHTML=buildCatOptions(nc.id);sel.value=nc.id;_scAdd=false;renderSubChips();msg('تمت إضافة النوع');
+      hid.value=nc.id;_scAdd=false;renderSubChips();msg('تمت إضافة النوع');
     }
   };
   renderSubChips();
@@ -575,7 +581,7 @@ function expView(){
       <div class="grid">
         <div class="field"><label>${esc(T('المبلغ'))} (${CURRENCY})</label><input name="amount" type="number" min=".01" step=".01" required></div>
         <div class="field"><label>${esc(T('طريقة الدفع'))}</label><select name="wallet">${wOpts('cash')}</select></div>
-        <div class="field"><label>${esc(T('الفئة'))}</label><select name="category">${buildCatOptions()}</select></div>
+        <div class="field"><label>${esc(T('الفئة'))}</label><select id="catSel" name="catMain">${addCatOptions()}</select><input type="hidden" name="category" value="${esc(addCatMains()[0]?addCatMains()[0].id:'')}"></div>
         <div class="field"><label>${esc(T('التاريخ'))}</label><input name="date" type="date" value="${today()}" required></div>
       </div>
       <div id="subChips"></div>
