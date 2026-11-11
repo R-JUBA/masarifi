@@ -962,7 +962,8 @@ function expRow(e){
       <div class="row" style="justify-content:flex-start;gap:12px">
         <span class="cat-dot" style="background:${safeCol(cat(e.category).color)}22">${esc(cat(e.category).emoji)}</span>
         <div>
-          <div class="expense-title">${esc(cat(e.category).name)}</div>
+          <div class="expense-title">${esc(cat(rootId(e.category)).name)}</div>
+          ${rootId(e.category)!==e.category ? `<div class="expense-note" style="font-weight:600">${esc(cat(e.category).name)}</div>` : ''}
           ${e.note ? `<div class="expense-note">${esc(e.note)}</div>` : ''}
         </div>
       </div>
