@@ -563,8 +563,8 @@ function delSubCat(sid,hid){
 }
 function bindSubChips(){
   const box=document.querySelector('#subChips'),sel=document.querySelector('#ef [name=catMain]'),hid=document.querySelector('#ef [name=category]');if(!box||!sel||!hid)return;
-  _scEdit=false;_scAdd=false;hid.value=sel.value;
-  sel.addEventListener('change',()=>{hid.value=sel.value;_scEdit=false;_scAdd=false;renderSubChips()});
+  if(!hid.value||mainOfSel(hid.value)!==sel.value){_scEdit=false;_scAdd=false;hid.value=sel.value}
+  if(!sel._scBound){sel._scBound=1;sel.addEventListener('change',()=>{hid.value=sel.value;_scEdit=false;_scAdd=false;renderSubChips()})}
   box.onclick=e=>{
     const t=e.target,mid=mainOfSel(hid.value);
     const d=t.closest('[data-scdel]');if(d){delSubCat(d.dataset.scdel,hid);return}
@@ -612,7 +612,7 @@ function expView(){
         </select>
         <select id="filterWallet">
           <option value="all">${esc(T('كل المحافظ'))}</option>
-          ${wList().map(w=>`<option value="${esc(w.id)}" ${filterWallet===w.id?'selected':''}>${w.ico} ${esc(T(w.name))}</option>`).join('')}
+          ${wList().map(w=>`<option value="${esc(w.id)}" ${filterWallet===w.id?'selected':''}>${esc(w.ico)} ${esc(T(w.name))}</option>`).join('')}
         </select>
       </div>
       <div class="filter-row">
@@ -664,7 +664,7 @@ function walletView(){
   </details>
   <details class="card grp">
     <summary>⚖️ ${esc(T('تعديل الرصيد'))}</summary>
-    <form id="wf" style="margin-top:10px;"><div class="grid">${wList().map(w=>`<div class="field"><label>${w.ico} ${esc(T(w.name))}</label><input name="b_${esc(w.id)}" type="number" step=".01" value="${wallets[w.id]||0}" required></div>`).join('')}</div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
+    <form id="wf" style="margin-top:10px;"><div class="grid">${wList().map(w=>`<div class="field"><label>${esc(w.ico)} ${esc(T(w.name))}</label><input name="b_${esc(w.id)}" type="number" step=".01" value="${wallets[w.id]||0}" required></div>`).join('')}</div><button style="width:100%;">${esc(T('حفظ الرصيد الإجمالي'))}</button></form>
   </details>
   <details class="card grp">
     <summary>📥 ${esc(T('إيداع'))}</summary>
@@ -1677,7 +1677,7 @@ function bind(){
       if(Array.isArray(d.recurring)) recurring=d.recurring.filter(r=>r&&Number(r.amount)>0&&ids.includes(r.wallet)).map(r=>({id:String(r.id||id()),amount:round(r.amount),dayOfMonth:Math.min(31,Math.max(1,parseInt(r.dayOfMonth)||1)),category:String(r.category||''),wallet:r.wallet,note:String(r.note||''),lastApplied:String(r.lastApplied||'')}));
       if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80)),rolloverBudget:!!d.cfg.rolloverBudget,autoArchive:!!d.cfg.autoArchive,allowNeg:!!d.cfg.allowNeg,wBank:d.cfg.wBank||'الحساب البنكي',wCash:d.cfg.wCash||'النقدية / الجيب',wx:wxIn,wIcoB:firstG(d.cfg.wIcoB),wIcoC:firstG(d.cfg.wIcoC),favs:Array.isArray(d.cfg.favs)?d.cfg.favs:[]});
       moves=Array.isArray(d.moves)?d.moves.filter(m=>m&&Number(m.amount)>0&&['deposit','transfer'].includes(m.type)).map(m=>({id:String(m.id||id()),type:m.type,amount:round(m.amount),to:ids.includes(m.to)?m.to:'cash',from:ids.includes(m.from)?m.from:'account',date:String(m.date||'').slice(0,10),source:String(m.source||'')})):[];
-      goals=Array.isArray(d.goals)?d.goals.filter(g=>g&&g.name&&Number(g.target)>0).map(g=>({id:String(g.id||id()),name:String(g.name),target:round(g.target),saved:Math.max(0,round(g.saved)),date:String(g.date||'').slice(0,10),byWallet:(g.byWallet&&typeof g.byWallet==='object')?g.byWallet:{}})):[];
+      goals=Array.isArray(d.goals)?d.goals.filter(g=>g&&g.name&&Number(g.target)>0).map(g=>{const bw={};if(g.byWallet&&typeof g.byWallet==='object')Object.entries(g.byWallet).forEach(([k,v])=>{if(ids.includes(k)&&Number(v)>0)bw[k]=round(v)});return{id:String(g.id||id()),name:String(g.name),target:round(g.target),saved:Math.max(0,round(g.saved)),date:String(g.date||'').slice(0,10),byWallet:bw}}):[];
       wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};wxIn.forEach(w=>{wallets[w.id]=round(d.wallets[w.id])});
       debts.forEach(x=>{if(x.wallet&&!ids.includes(x.wallet))delete x.wallet;x.payments.forEach(p=>{if(p.wallet&&!ids.includes(p.wallet))delete p.wallet})});
       wNorm();save();render();msg('تم الاستيراد')
