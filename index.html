@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="theme-color" content="#0f766e">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -293,8 +294,8 @@ const wList=()=>[{id:'account',name:cfg.wBank||'بنك',ico:firstG(cfg.wIcoB)||'
 const wOk=i=>typeof i==='string'&&Object.prototype.hasOwnProperty.call(wallets,i);
 const wName=i=>{const w=wList().find(x=>x.id===i);return w?T(w.name):T('محفظة محذوفة')};
 const wLbl=i=>{const w=wList().find(x=>x.id===i);return w?w.ico+' '+T(w.name):'👛 '+T('محفظة محذوفة')};
-const wOpts=sel=>wList().map(w=>`<option value="${esc(w.id)}"${w.id===sel?' selected':''}>${w.ico} ${esc(T(w.name))}</option>`).join('');
-const wUsed=i=>expenses.some(x=>x.wallet===i)||recurring.some(r=>r.wallet===i)||moves.some(m=>m.to===i||m.from===i)||debts.some(d=>(d.payments||[]).some(p=>p.wallet===i));
+const wOpts=sel=>wList().map(w=>`<option value="${esc(w.id)}"${w.id===sel?' selected':''}>${esc(w.ico)} ${esc(T(w.name))}</option>`).join('');
+const wUsed=i=>expenses.some(x=>x.wallet===i)||recurring.some(r=>r.wallet===i)||moves.some(m=>m.to===i||m.from===i)||debts.some(d=>d.wallet===i||(d.payments||[]).some(p=>p.wallet===i))||goals.some(g=>g.byWallet&&g.byWallet[i]>0);
 function wNorm(){
   cfg.wx=(Array.isArray(cfg.wx)?cfg.wx:[]).filter(w=>w&&typeof w.id==='string'&&w.id&&w.name).slice(0,WMAX-2).map(w=>({id:w.id,name:String(w.name).slice(0,20),ico:firstG(w.ico)||'👛'}));
   cfg.wIcoB=firstG(cfg.wIcoB);cfg.wIcoC=firstG(cfg.wIcoC);
@@ -313,7 +314,8 @@ let LANG=['ar','fr','en'].includes(cfg.lang)?cfg.lang:'ar';
 
 function migr(d){
   d.payments=Array.isArray(d.payments)?d.payments.filter(p=>Number(p.amount)>0):(d.settled?[{id:id(),amount:round(d.amount),date:''}]:[]);
-  delete d.settled;delete d.wallet;
+  delete d.settled;
+  if(d.wallet&&!wOk(d.wallet))delete d.wallet;
   return d;
 }
 const paid=d=>round(d.payments.reduce((s,p)=>s+Number(p.amount),0)), rem=d=>Math.max(0,round(d.amount-paid(d)));
@@ -398,29 +400,37 @@ function applyRecurring(){
 }
 
 const _openSt={};
-document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('#view details.grp'))_openSt[tab+':'+Array.from(document.querySelectorAll('#view details.grp')).indexOf(d)]=d.open},true);
+const grpKey=(d,i)=>tab+':'+(d.dataset.grp||(d.querySelector('summary')?d.querySelector('summary').textContent.trim().slice(0,25):i));
+document.addEventListener('toggle',e=>{
+  const d=e.target;
+  if(d&&d.matches&&d.matches('#view details.grp')){
+    const i=Array.from(document.querySelectorAll('#view details.grp')).indexOf(d);
+    _openSt[grpKey(d,i)]=d.open;
+  }
+},true);
 function nav(t){ if(tab!==t){tab=t;try{history.pushState({tab:t},'')}catch{}} editCat=null;payDebt=null;editExp=null;editMove=null;editRec=null;editDebt=null;render(true) }
 function toggleNav(){ nav(tab==='expenses'?'settings':'expenses') }
 
 function render(scrollTop=false){
   applyTheme(); applyLang();
+  if(typeof isLocked!=='undefined'&&isLocked&&cfg.pw){ lockNow(); return; }
   if(!isDragging) document.querySelectorAll('.drag-clone').forEach(x=>x.remove());
+  
+  const hb=document.querySelector('#hbal');
   {const WL=wList(),sm=WL.length>2,tot=round(WL.reduce((a,w)=>a+(wallets[w.id]||0),0));
-   document.querySelector('#hbal').innerHTML=(sm?`<div class="balance sm" data-go="wallets" style="grid-column:1/-1">💰 ${esc(T('الرصيد الإجمالي'))}<strong>${fmt(tot)}</strong></div>`:'')+WL.map(w=>`<div class="balance${sm?' sm':''}" data-go="wallets">${w.ico} <span>${esc(T(w.id==='account'?(cfg.wBank||'الحساب البنكي'):w.id==='cash'?(cfg.wCash||'النقدية / الجيب'):w.name))}</span><strong>${fmt(wallets[w.id]||0)}</strong></div>`).join('')}
+   hb.innerHTML=(sm?`<div class="balance sm" data-go="wallets" style="grid-column:1/-1">💰 ${esc(T('الرصيد الإجمالي'))}<strong>${fmt(tot)}</strong></div>`:'')+WL.map(w=>`<div class="balance${sm?' sm':''}" data-go="wallets">${esc(w.ico)} <span>${esc(T(w.id==='account'?(cfg.wBank||'الحساب البنكي'):w.id==='cash'?(cfg.wCash||'النقدية / الجيب'):w.name))}</span><strong>${fmt(wallets[w.id]||0)}</strong></div>`).join('')}
   
   const navBtn = document.getElementById('navToggleBtn');
-  if(tab === 'expenses') {
-    navBtn.innerHTML = '⚙️ الإعدادات';
-  } else {
-    navBtn.innerHTML = '📝 المصاريف';
-  }
+  navBtn.innerHTML = tab === 'expenses' ? '⚙️ الإعدادات' : '📝 المصاريف';
   
-  document.querySelector('#view').innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView,recurring:()=>backBtn()+recurringHTML(),goals:()=>backBtn()+goalsHTML()})[tab]();
-  document.querySelectorAll('#view details.grp').forEach((d,i)=>{const k=tab+':'+i;if(k in _openSt)d.open=_openSt[k]});
+  const vw=document.querySelector('#view');
+  vw.innerHTML=({expenses:expView,stats:statView,wallets:walletView,debts:debtView,backup:backupView,settings:settingsView,security:securityView,budget:()=>backBtn()+budgetHTML(),archive:()=>backBtn()+archHTML(),theme:themeView,lang:langView,recurring:()=>backBtn()+recurringHTML(),goals:()=>backBtn()+goalsHTML()})[tab]();
   
   document.querySelectorAll('#bnav [data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===(['expenses','stats','wallets'].includes(tab)?tab:'settings')));
   
-  bind(); ico(document.body); tr(document.body);
+  bind();
+  document.querySelectorAll('header,#view,#bnav,.modal-overlay').forEach(el=>{ico(el);tr(el)});
+  vw.querySelectorAll('details.grp').forEach((d,i)=>{const k=grpKey(d,i);if(k in _openSt)d.open=_openSt[k]});
   if(scrollTop) setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),50);
   if(tab==='settings') offCheck();
 }
@@ -983,8 +993,9 @@ function effBudgetFor(mk){
   let base = cfg.budget, roll = 0;
   if (cfg.rolloverBudget && base > 0) {
     let pm = prevMonth(mk);
-    let pmSpent = sum(expenses.filter(e => pKey(e.date) === pm));
-    if (base > pmSpent) roll = round(base - pmSpent);
+    let pmList = expenses.filter(e => pKey(e.date) === pm);
+    let pmSpent = sum(pmList);
+    if (pmList.length > 0 && base > pmSpent) roll = round(base - pmSpent);
   }
   return { base, roll, eff: round(base + roll) };
 }
@@ -1081,7 +1092,7 @@ function exportXls(all, range){
 function exportCsv(all, range){
   let pe = all ? expenses.slice() : (range ? range : periodExp(smo()));
   let label = all ? 'all' : (range ? 'range' : smo());
-  const q=v=>{v=String(v??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
+  const q=v=>{v=String(v??'');if(/^[\s]*[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
   let csv=['التاريخ','الفئة','المبلغ','الدفع','ملاحظة'].map(h=>q(T(h))).join(';')+'\r\n';
   pe.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
     csv+=[q(e.date),q(cat(e.category).name),String(Number(e.amount)).replace('.',','),q(T(wName(e.wallet))),q(e.note||'')].join(';')+'\r\n';
@@ -1137,22 +1148,48 @@ const _enc=new TextEncoder(),_hx=b=>Array.from(new Uint8Array(b)).map(x=>x.toStr
 async function kdf(p,salt){let k=await crypto.subtle.importKey('raw',_enc.encode(p),'PBKDF2',false,['deriveBits']);return _hx(await crypto.subtle.deriveBits({name:'PBKDF2',salt:_enc.encode(salt),iterations:150000,hash:'SHA-256'},k,256))}
 async function newPw(p){let s=_hx(crypto.getRandomValues(new Uint8Array(16)));return{s,h:await kdf(p,s)}}
 async function checkPw(p){return!!cfg.pw&&(await kdf(String(p||''),cfg.pw.s))===cfg.pw.h}
-let fails=0,until=0;try{fails=+localStorage.getItem('masarifi.fails')||0;until=+localStorage.getItem('masarifi.until')||0}catch{}
+let fails=Number(cfg.fails)||0,until=Number(cfg.until)||0;
+try{
+  fails=Math.max(fails,+localStorage.getItem('masarifi.fails')||0);
+  until=Math.max(until,+localStorage.getItem('masarifi.until')||0);
+}catch{}
+let isLocked=!!cfg.pw;
 let _lockReturnTab='expenses';
 function lockNow(){
-  if(!cfg.pw||document.querySelector('#lock'))return;
+  if(!cfg.pw)return;
+  isLocked=true;
   applyTheme();
-  cancelActiveDrag();document.getElementById('catModal').classList.remove('active');
+  cancelActiveDrag();
+  document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));
   _lockReturnTab = ['expenses','stats','wallets','settings','budget','archive','debts','goals','recurring','backup','security','theme','lang'].includes(tab) ? tab : 'expenses';
+  const hb=document.querySelector('#hbal'),vw=document.querySelector('#view');
+  if(hb)hb.innerHTML='';
+  if(vw)vw.innerHTML='';
+  if(document.querySelector('#lock'))return;
   let d=document.createElement('div');d.id='lock';d.style.cssText='position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#0f172a,#0f766e);display:flex;align-items:center;justify-content:center;padding:24px';
-  d.innerHTML='<form id="lf" style="background:var(--card);color:var(--text);border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);"><div style="font-size:44px">🔒</div><h2>📒 مصاريفي</h2><input id="lp" type="password" autocomplete="off" placeholder="كلمة المرور" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;margin:10px 0;font:inherit;background:var(--bg);color:var(--text);text-align:center;"><button style="width:100%;">فتح</button><div id="le" style="color:var(--danger);min-height:22px;margin-top:8px;font-size:13px;font-weight:600;"></div></form>';
+  d.innerHTML='<form id="lf" style="background:var(--card);color:var(--text);border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);"><div style="font-size:44px">🔒</div><h2>📒 مصاريفي</h2><input id="lp" type="password" autocomplete="off" placeholder="كلمة المرور" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;margin:10px 0;font:inherit;background:var(--bg);color:var(--text);text-align:center;"><button id="lbtn" style="width:100%;">فتح</button><div id="le" style="color:var(--danger);min-height:22px;margin-top:8px;font-size:13px;font-weight:600;"></div></form>';
   document.body.appendChild(d);ico(d);tr(d);
-  let f=d.querySelector('#lf'),i=d.querySelector('#lp'),er=d.querySelector('#le');
+  let f=d.querySelector('#lf'),i=d.querySelector('#lp'),btn=d.querySelector('#lbtn'),er=d.querySelector('#le');
+  d.addEventListener('keydown',ev=>{
+    if(ev.key==='Tab'){
+      ev.preventDefault();
+      (document.activeElement===i?btn:i).focus();
+    }
+  });
   f.onsubmit=async e=>{
     e.preventDefault();
     if(Date.now()<until)return er.textContent=T('انتظر '+Math.ceil((until-Date.now())/1000)+' ثانية');
-    if(await checkPw(i.value)){fails=0;until=0;try{localStorage.removeItem('masarifi.fails');localStorage.removeItem('masarifi.until')}catch{}d.remove();tab=_lockReturnTab||'expenses';render(true)}
-    else{fails++;i.value='';if(fails>=5)until=Date.now()+30000*(fails-4);try{localStorage.setItem('masarifi.fails',fails);localStorage.setItem('masarifi.until',until)}catch{}er.textContent=T('كلمة المرور غير صحيحة')}
+    if(await checkPw(i.value)){
+      fails=0;until=0;isLocked=false;
+      delete cfg.fails;delete cfg.until;
+      try{localStorage.removeItem('masarifi.fails');localStorage.removeItem('masarifi.until')}catch{}
+      save();d.remove();tab=_lockReturnTab||'expenses';render(true);
+    }else{
+      fails++;i.value='';if(fails>=5)until=Date.now()+30000*(fails-4);
+      cfg.fails=fails;cfg.until=until;
+      try{localStorage.setItem('masarifi.fails',fails);localStorage.setItem('masarifi.until',until)}catch{}
+      save();er.textContent=T('كلمة المرور غير صحيحة');
+    }
   };
   setTimeout(()=>i.focus(),50);
 }
@@ -1283,9 +1320,10 @@ function bind(){
   let fc=document.querySelector('#filterCat'); if(fc) fc.onchange=()=>{filterCat=fc.value; listLimit=50; refreshExpList();};
   let fw=document.querySelector('#filterWallet'); if(fw) fw.onchange=()=>{filterWallet=fw.value; listLimit=50; refreshExpList();};
   
-  let ff=document.querySelector('#filterFrom'); if(ff) ff.onchange=()=>{filterDateFrom=ff.value; listLimit=50; render();};
-  let ft=document.querySelector('#filterTo'); if(ft) ft.onchange=()=>{filterDateTo=ft.value; listLimit=50; render();};
-  let cd=document.querySelector('#clearDates'); if(cd) cd.onclick=()=>{filterDateFrom=''; filterDateTo=''; render();};
+  const syncClearDatesBtn=()=>{const b=document.querySelector('#clearDates');if(b)b.style.display=(filterDateFrom||filterDateTo)?'':'none'};
+  let ff=document.querySelector('#filterFrom'); if(ff) ff.onchange=()=>{filterDateFrom=ff.value; listLimit=50; syncClearDatesBtn(); refreshExpList();};
+  let ft=document.querySelector('#filterTo'); if(ft) ft.onchange=()=>{filterDateTo=ft.value; listLimit=50; syncClearDatesBtn(); refreshExpList();};
+  let cd=document.querySelector('#clearDates'); if(cd) cd.onclick=()=>{filterDateFrom=''; filterDateTo=''; listLimit=50; if(ff)ff.value=''; if(ft)ft.value=''; syncClearDatesBtn(); refreshExpList();};
 
   let wnf=document.querySelector('#wnf');
   if(wnf) wnf.onsubmit=e=>{
@@ -1356,7 +1394,7 @@ function bind(){
     recurring.push({
       id: id(), amount: a, dayOfMonth: d, category: f.get('category'),
       wallet: f.get('wallet'), note: f.get('note').trim(),
-      lastApplied: startNext ? skipKey : ''
+      lastApplied: startNext ? skipKey : prevMonth(skipKey)
     });
     applyRecurring(); save(); render(); msg('تم الحفظ');
   };
@@ -1371,7 +1409,7 @@ function bind(){
     if(a<=0 || d<1 || d>31) return msg('بيانات غير صحيحة');
     r.amount=a; r.dayOfMonth=d; r.category=f.get('category');
     r.wallet=f.get('wallet'); r.note=String(f.get('note')||'').trim();
-    editRec=null; save(); render(); msg('تم التعديل');
+    editRec=null; applyRecurring(); save(); render(); msg('تم التعديل');
   });
   
   document.querySelectorAll('[data-delrec]').forEach(b=>b.onclick=()=>{
@@ -1407,7 +1445,7 @@ function bind(){
         wallets[w] = round(wallets[w] + a);
       }
     }
-    debts.push({id:id(),person:f.get('person').trim(),amount:a,type,payments:[]});
+    debts.push({id:id(),person:f.get('person').trim(),amount:a,type,wallet:link?w:null,payments:[]});
     save();render();msg('تمت إضافة الدين')
   };
   
@@ -1477,6 +1515,12 @@ function bind(){
     let a=round(f.get('amount'));
     if(!p || a<=0) return msg('بيانات غير صحيحة');
     if(a < paid(d)) return msg('المبلغ لا يمكن أن يكون أقل من المسدد');
+    if(d.wallet && wOk(d.wallet) && a !== d.amount){
+      const diff = round(a - d.amount);
+      const nextBal = d.type === 'lend' ? round(wallets[d.wallet] - diff) : round(wallets[d.wallet] + diff);
+      if(!cfg.allowNeg && nextBal < 0) return msg('الرصيد غير كاف');
+      wallets[d.wallet] = nextBal;
+    }
     d.person = p;
     d.amount = a;
     editDebt = null;
@@ -1487,10 +1531,24 @@ function bind(){
     if(!confirm('حذف هذا الدين نهائياً؟'))return;
     let d=debts.find(x=>x.id===b.dataset.deldebt);
     if(!d) return;
-    let _idx = debts.indexOf(d);
+    const wNext = Object.assign({}, wallets);
+    if(d.wallet && wOk(d.wallet)){
+      wNext[d.wallet] = round(wNext[d.wallet] + (d.type === 'lend' ? d.amount : -d.amount));
+    }
+    (d.payments || []).forEach(p => {
+      if(p.wallet && wOk(p.wallet)){
+        wNext[p.wallet] = round(wNext[p.wallet] + (d.type === 'lend' ? -p.amount : p.amount));
+      }
+    });
+    if(!cfg.allowNeg && Object.keys(wNext).some(k => wNext[k] < 0 && wNext[k] < wallets[k])){
+      return msg('الرصيد غير كاف');
+    }
+    let _idx = debts.indexOf(d), _wCopy = Object.assign({}, wallets);
+    wallets = wNext;
     debts=debts.filter(x=>x.id!==d.id);
     save();render();
     offerUndo('تم حذف الدين', ()=>{
+      wallets = _wCopy;
       debts.splice(_idx, 0, d);
       save();render();
     });
@@ -1556,18 +1614,23 @@ function bind(){
     const op=(e.submitter&&e.submitter.value)||'add';
     let link = f.get('link') === 'on';
     let w = f.get('wallet') || 'cash';
+    g.byWallet = g.byWallet || {};
 
     if(op==='sub'){
       if(a>g.saved)return msg('المبلغ أكبر من المدخر');
       g.saved=round(g.saved-a);
-      if(link) wallets[w] = round(wallets[w] + a);
+      if(link && wOk(w)){
+        wallets[w] = round(wallets[w] + a);
+        g.byWallet[w] = Math.max(0, round((g.byWallet[w] || 0) - a));
+      }
       save();render();msg('تم السحب');
     }else{
-      g.saved=round(g.saved+a);
-      if(link) {
+      if(link && wOk(w)) {
         if(!cfg.allowNeg && wallets[w] < a) return msg('الرصيد غير كاف للادخار');
         wallets[w] = round(wallets[w] - a);
+        g.byWallet[w] = round((g.byWallet[w] || 0) + a);
       }
+      g.saved=round(g.saved+a);
       save();render();msg(g.saved>=g.target?'🎉 بلغت هدفك!':'تم الحفظ');
     }
   });
@@ -1576,16 +1639,27 @@ function bind(){
     if(!confirm('حذف هذا الهدف؟'))return;
     let g=goals.find(x=>x.id===b.dataset.delgoal);
     if(!g) return;
-    let _idx = goals.indexOf(g);
+    let _idx = goals.indexOf(g), _wCopy = Object.assign({}, wallets);
+    if(g.byWallet && g.saved > 0){
+      let remToRefund = g.saved;
+      Object.entries(g.byWallet).forEach(([w, amt]) => {
+        if(wOk(w) && amt > 0 && remToRefund > 0){
+          const ref = Math.min(remToRefund, round(amt));
+          wallets[w] = round(wallets[w] + ref);
+          remToRefund = round(remToRefund - ref);
+        }
+      });
+    }
     goals=goals.filter(x=>x.id!==g.id);
     save();render();
     offerUndo('تم حذف الهدف', ()=>{
+      wallets = _wCopy;
       goals.splice(_idx, 0, g);
       save();render();
     });
   });
   
-  let ex=document.querySelector('#export');if(ex)ex.onclick=()=>{let blob=new Blob([JSON.stringify({version:9,exportedAt:new Date().toISOString(),expenses,wallets,debts,cats,recurring,moves,goals,cfg:Object.assign({},cfg,{pw:undefined})})],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='masarifi-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);cfg.lastBackup=Date.now();save();msg('تم تصدير النسخة الاحتياطية')};
+  let ex=document.querySelector('#export');if(ex)ex.onclick=()=>{let blob=new Blob([JSON.stringify({version:9,exportedAt:new Date().toISOString(),expenses,wallets,debts,cats,recurring,moves,goals,cfg:Object.assign({},cfg,{pw:undefined,fails:undefined,until:undefined})})],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='masarifi-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);cfg.lastBackup=Date.now();save();msg('تم تصدير النسخة الاحتياطية')};
   
   let im=document.querySelector('#import'),file=document.querySelector('#file');if(im)im.onclick=()=>{window.__nlu=Date.now()+12e4;file.click()};
   if(file)file.onchange=async()=>{
@@ -1603,9 +1677,9 @@ function bind(){
       if(Array.isArray(d.recurring)) recurring=d.recurring.filter(r=>r&&Number(r.amount)>0&&ids.includes(r.wallet)).map(r=>({id:String(r.id||id()),amount:round(r.amount),dayOfMonth:Math.min(31,Math.max(1,parseInt(r.dayOfMonth)||1)),category:String(r.category||''),wallet:r.wallet,note:String(r.note||''),lastApplied:String(r.lastApplied||'')}));
       if(d.cfg&&typeof d.cfg==='object')cfg=Object.assign(cfg,{salary:Math.max(0,round(d.cfg.salary)),budget:Math.max(0,round(d.cfg.budget)),months:Math.max(1,Number(d.cfg.months)||6),startDay:Math.min(31,Math.max(1,Number(d.cfg.startDay)||1)),warn:Math.min(100,Math.max(1,Number(d.cfg.warn)||80)),rolloverBudget:!!d.cfg.rolloverBudget,autoArchive:!!d.cfg.autoArchive,allowNeg:!!d.cfg.allowNeg,wBank:d.cfg.wBank||'الحساب البنكي',wCash:d.cfg.wCash||'النقدية / الجيب',wx:wxIn,wIcoB:firstG(d.cfg.wIcoB),wIcoC:firstG(d.cfg.wIcoC),favs:Array.isArray(d.cfg.favs)?d.cfg.favs:[]});
       moves=Array.isArray(d.moves)?d.moves.filter(m=>m&&Number(m.amount)>0&&['deposit','transfer'].includes(m.type)).map(m=>({id:String(m.id||id()),type:m.type,amount:round(m.amount),to:ids.includes(m.to)?m.to:'cash',from:ids.includes(m.from)?m.from:'account',date:String(m.date||'').slice(0,10),source:String(m.source||'')})):[];
-      goals=Array.isArray(d.goals)?d.goals.filter(g=>g&&g.name&&Number(g.target)>0).map(g=>({id:String(g.id||id()),name:String(g.name),target:round(g.target),saved:Math.max(0,round(g.saved)),date:String(g.date||'').slice(0,10)})):[];
+      goals=Array.isArray(d.goals)?d.goals.filter(g=>g&&g.name&&Number(g.target)>0).map(g=>({id:String(g.id||id()),name:String(g.name),target:round(g.target),saved:Math.max(0,round(g.saved)),date:String(g.date||'').slice(0,10),byWallet:(g.byWallet&&typeof g.byWallet==='object')?g.byWallet:{}})):[];
       wallets={account:round(d.wallets.account),cash:round(d.wallets.cash)};wxIn.forEach(w=>{wallets[w.id]=round(d.wallets[w.id])});
-      debts.forEach(x=>x.payments.forEach(p=>{if(p.wallet&&!ids.includes(p.wallet))delete p.wallet}));
+      debts.forEach(x=>{if(x.wallet&&!ids.includes(x.wallet))delete x.wallet;x.payments.forEach(p=>{if(p.wallet&&!ids.includes(p.wallet))delete p.wallet})});
       wNorm();save();render();msg('تم الاستيراد')
     }catch{msg('ملف غير صالح')}
   }
@@ -1756,8 +1830,18 @@ function bindCatModal() {
     e.stopPropagation();
     if (cats.length <= 1) return msg('يجب إبقاء فئة واحدة على الأقل');
     let c = cats.find(x => x.id === b.dataset.id);
-    if (!c || !confirm('حذف فئة «' + c.name + '»؟ ستظهر مصاريفها السابقة كغير مصنفة.')) return;
-    cats.filter(x => x.parent === c.id).forEach(x => x.parent = null);
+    if (!c) return;
+    const p = c.parent ? cats.find(x => x.id === c.parent) : null;
+    const confirmMsg = p ? 'حذف «' + c.name + '»؟ ستُنقل مصاريفه السابقة إلى «' + p.name + '».' : 'حذف فئة «' + c.name + '»؟ ستظهر مصاريفها السابقة كغير مصنفة.';
+    if (!confirm(confirmMsg)) return;
+    if (p) {
+      expenses.forEach(x => { if(x.category === c.id) x.category = p.id; });
+      recurring.forEach(r => { if(r.category === c.id) r.category = p.id; });
+      (cfg.favs || []).forEach(f => { if(f.category === c.id) f.category = p.id; });
+      if(filterCat === c.id) filterCat = p.id;
+    } else {
+      cats.filter(x => x.parent === c.id).forEach(x => x.parent = null);
+    }
     cats = cats.filter(x => x.id !== c.id);
     save(); renderCatModalList(); render();
   });
@@ -1997,10 +2081,16 @@ addEventListener('popstate',e=>{
 });
 function updBar(){const b=document.createElement('div');b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9000;background:#0f766e;color:#fff;padding:12px;text-align:center;font-weight:600';b.innerHTML='<span>يوجد تحديث جديد</span> <button id="updBtn" style="margin-inline-start:12px;padding:6px 14px;background:#fff;color:#0f766e">تحديث الآن</button>';document.body.appendChild(b);tr(b);b.querySelector('#updBtn').onclick=()=>location.reload()}
 let _focusAdd=false;try{const q=new URLSearchParams(location.search),tb=q.get('tab');if(q.get('add')==='1'){tab='expenses';_focusAdd=true}else if(['stats','wallets','debts','budget','goals','recurring'].includes(tb))tab=tb;if(q.has('add')||q.has('tab'))history.replaceState(history.state,'',location.pathname)}catch(e){}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const em=document.getElementById('emojiModal');if(em&&em.classList.contains('active')){em.classList.remove('active');return}
+  const ex=document.getElementById('expModal');if(ex&&ex.classList.contains('active')){ex.classList.remove('active');return}
+  const cm=document.getElementById('catModal');if(cm&&cm.classList.contains('active')){closeCatModal();return}
+});
 autoArch();applyRecurring();
 if(cfg.pw)lockNow();
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(cfg.pw&&cfg.autoLock!==false&&Date.now()>=(window.__nlu||0))lockNow()}else{window.__nlu=0;const n=expenses.length,a=autoArch();applyRecurring();if((expenses.length!==n||a)&&!document.querySelector('#lock'))render()}});
-render();
+if(!cfg.pw)render();
 if(_focusAdd&&!document.querySelector('#lock')){const _a=document.querySelector('#ef [name=amount]');if(_a)_a.focus()}
 if(window.__idb&&window.__idb.restored)setTimeout(()=>msg('تمت استعادة بياناتك من النسخة الداخلية'),700);
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
