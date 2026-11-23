@@ -286,7 +286,7 @@ const today=()=>localISO();
 
 function read(k,d){try{let x=(window.__SNAP&&k in window.__SNAP)?window.__SNAP[k]:localStorage.getItem(k);return x===null||x===undefined?d:JSON.parse(x)}catch{return d}}
 let expenses=read(K.e,[]), wallets=read(K.w,{account:0,cash:0}), debts=read(K.d,[]), cats=read(K.c2,null), recurring=read(K.r,[]), moves=read(K.m,[]), goals=read(K.g,[]), tab='expenses', editCat=null, payDebt=null, statMonth='',cmpMonth='', editExp=null, editMove=null, searchQuery='', filterCat='all', cfg=Object.assign({salary:0,budget:0,months:6,startDay:1,warn:80,theme:'light',autoLock:true,lang:'ar',rolloverBudget:false,autoArchive:false,allowNeg:false,lastBackup:0,wBank:'الحساب البنكي',wCash:'النقدية / الجيب'},read(K.s,{}));
-let editRec=null, editDebt=null, undoAction=null, _undoTimer=null, filterWallet='all', filterDateFrom='', filterDateTo='';
+let editRec=null, editDebt=null, undoAction=null, _undoTimer=null, filterWallet='all', filterDateFrom='', filterDateTo='', debtFilter='active';
 
 const WMAX=6;
 const firstG=v=>{v=String(v==null?'':v).trim();if(!v)return'';try{const it=new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(v)[Symbol.iterator]().next();return it.value?it.value.segment:''}catch(e){return Array.from(v)[0]||''}};
@@ -762,7 +762,10 @@ function debtView(){
     </select>
   </div>
   <div class="muted" style="margin-bottom:12px;">الديون لا تؤثر على الأرصدة تلقائياً، بل تُسجل كالتزامات مالية.</div><button style="width:100%;">إضافة الدين</button></form></div></details>
-  <details class="card grp"><summary>📜 سجل الديون</summary><div style="margin-top:10px">${debts.map(debtRow).join('')||'<div class="empty">لا توجد ديون</div>'}</div></details>`;
+  <details class="card grp" open><summary>📜 سجل الديون</summary><div style="margin-top:10px">
+  <div class="row" style="gap:6px;margin-bottom:6px;">${[['active','الجارية'],['paid','المسددة'],['all','الكل']].map(([k,l])=>`<button type="button" class="${debtFilter===k?'':'secondary'}" style="flex:1;padding:8px;font-size:13px;" data-dfilter="${k}">${l}</button>`).join('')}</div>
+  ${(()=>{const L=debts.filter(d=>debtFilter==='all'||(debtFilter==='paid'?rem(d)<=0:rem(d)>0));return L.map(debtRow).join('')||`<div class="empty">${debtFilter==='paid'?'لا توجد ديون مسددة':debtFilter==='active'?'لا توجد ديون جارية':'لا توجد ديون'}</div>`})()}
+  </div></details>`;
 }
 
 function recurringHTML(){
@@ -1218,6 +1221,7 @@ Object.assign(D,{"المتصفح لا يدعم العمل دون اتصال": ["
 Object.assign(D,{"اختر الفترة":["Choisir la période","Choose period"],"الفترة المعروضة":["Période affichée","Displayed period"],"يُسجَّل بتاريخ هذا اليوم من كل شهر ميلادي، وتُعوَّض الأشهر الفائتة تلقائياً عند فتح التطبيق.":["Enregistrée à cette date chaque mois civil ; les mois manqués sont rattrapés à l’ouverture de l’application.","Recorded on this day of each calendar month; missed months are caught up when the app opens."]});
 Object.assign(D,{"المال":["Argent","Money"],"التحليل والتخطيط":["Analyse et planification","Analysis & planning"]});
 Object.assign(D,{"التخزين الداخلي الاحتياطي غير متاح في هذا المتصفح":["Stockage de secours interne indisponible dans ce navigateur","Internal backup storage is unavailable in this browser"],"تعذّر حفظ النسخة الداخلية":["Échec de la copie de secours interne","Internal backup copy failed"],"نسخة داخلية احتياطية سليمة":["Copie de secours interne en bon état","Internal backup copy is healthy"],"تمت استعادة بياناتك من النسخة الداخلية":["Vos données ont été restaurées depuis la copie interne","Your data was restored from the internal copy"],"تعذر حذف البيانات":["Impossible de supprimer les données","Could not delete the data"],"المفضلة":["Favoris","Favorites"],"حفظ كمفضلة":["Enregistrer en favori","Save as favorite"],"تمت الإضافة إلى المفضلة":["Ajouté aux favoris","Added to favorites"],"الحد الأقصى 10 مفضلات":["Maximum 10 favoris","Maximum 10 favorites"],"ملخص الأسبوع":["Résumé de la semaine","Weekly summary"],"مصاريف هذا الأسبوع":["Dépenses cette semaine","This week's spending"],"مقارنة بنفس الأيام من الأسبوع الماضي":["Par rapport aux mêmes jours de la semaine dernière","Vs. same days last week"],"أعلى فئة هذا الأسبوع":["Catégorie principale cette semaine","Top category this week"],"الفئات عبر الأشهر":["Catégories par mois","Categories over months"],"لا توجد بيانات كافية":["Pas assez de données","Not enough data"],"آخر 6 فترات — الشريط الداكن هو الفترة الحالية":["6 dernières périodes — la barre foncée est la période en cours","Last 6 periods — the dark bar is the current one"],"محفظة غير صحيحة":["Portefeuille invalide","Invalid wallet"],"الرصيد الإجمالي":["Solde total","Total balance"],"محفظة محذوفة":["Portefeuille supprimé","Deleted wallet"],"إضافة محفظة":["Ajouter un portefeuille","Add wallet"],"اسم المحفظة":["Nom du portefeuille","Wallet name"],"الأيقونة":["Icône","Icon"],"مثال: بريد الجزائر":["Ex. : Algérie Poste","e.g. Algeria Post"],"الحد الأقصى 6 محافظ":["Maximum 6 portefeuilles","Maximum 6 wallets"],"اسم المحفظة مستخدم":["Nom déjà utilisé","Name already used"],"تمت إضافة المحفظة":["Portefeuille ajouté","Wallet added"],"تم حذف المحفظة":["Portefeuille supprimé","Wallet deleted"],"لا يمكن حذف محفظة لها رصيد أو عمليات":["Impossible de supprimer un portefeuille ayant un solde ou des opérations","Cannot delete a wallet with a balance or transactions"],"حذف هذه المحفظة؟":["Supprimer ce portefeuille ?","Delete this wallet?"],"تم تعديل الإيداع":["Dépôt modifié","Deposit updated"],"إجمالي السنة":["Total de l’année","Year total"],"المتوسط اليومي":["Moyenne quotidienne","Daily average"],"سجل الإيداعات والتحويلات":["Historique des dépôts et virements","Deposits & transfers log"],"لا توجد إيداعات أو تحويلات":["Aucun dépôt ni virement","No deposits or transfers"],"الفترة والتصدير":["Période et export","Period & export"],"ملخص الديون":["Résumé des dettes","Debts summary"],"ملخص الميزانية":["Résumé du budget","Budget summary"],"إضافة مصروف متكرر":["Ajouter une dépense récurrente","Add recurring expense"]});
+Object.assign(D,{"الجارية":["En cours","Active"],"المسددة":["Remboursées","Paid"],"الكل":["Toutes","All"],"لا توجد ديون مسددة":["Aucune dette remboursée","No paid debts"],"لا توجد ديون جارية":["Aucune dette en cours","No active debts"]});
 Object.assign(D,{"🤝 سداد ديون":["🤝 Remboursement de dettes","🤝 Debt repayments"],"لا تدخل في المصاريف":["Non incluses dans les dépenses","Not included in expenses"],"خُصم من المحافظ:":["Débité des portefeuilles :","Deducted from wallets:"],"لم يُخصم:":["Non débité :","Not deducted:"]});
 Object.assign(D,{
   "تخطَّ الشهر الحالي وابدأ من الشهر القادم":["Ignorer le mois en cours et commencer le mois suivant","Skip current month, start next month"],
@@ -1460,6 +1464,7 @@ function bind(){
     save();render();msg('تمت إضافة الدين')
   };
   
+  document.querySelectorAll('[data-dfilter]').forEach(b=>b.onclick=()=>{debtFilter=b.dataset.dfilter;render()});
   document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{payDebt=b.dataset.pay;render()});
   document.querySelectorAll('[data-cancelpay]').forEach(b=>b.onclick=()=>{payDebt=null;render()});
   
